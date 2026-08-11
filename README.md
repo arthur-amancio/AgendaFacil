@@ -37,22 +37,28 @@ Sistema web de agendamento para pequenos estabelecimentos e profissionais de ser
 ~~~bash
 git clone https://github.com/ArthurFancisco/AgendaFacil.git
 cd AgendaFacil
+cp .env.example .env
+~~~
+
+Defina um valor não vazio para DB_PASSWORD no arquivo .env. Em seguida, inicie o banco:
+
+~~~bash
 docker compose up -d
 ~~~
 
-Defina a senha local do banco antes de iniciar a aplicação.
+Use a mesma senha ao iniciar a aplicação.
 
 Linux/macOS:
 
 ~~~bash
-export DB_PASSWORD=defina_uma_senha_local
+export DB_PASSWORD="<mesmo valor definido no .env>"
 mvn spring-boot:run
 ~~~
 
 PowerShell:
 
 ~~~powershell
-$env:DB_PASSWORD="defina_uma_senha_local"
+$env:DB_PASSWORD="<mesmo valor definido no .env>"
 mvn spring-boot:run
 ~~~
 
@@ -69,7 +75,7 @@ Acesse:
 | DB_USERNAME | usuário do banco |
 | DB_PASSWORD | senha do banco, obrigatória |
 
-Não coloque senhas reais no código, nas migrations ou na documentação.
+O arquivo .env é ignorado pelo Git. Não publique senhas reais no código, nas migrations ou na documentação.
 
 ## Autor
 
