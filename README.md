@@ -1,51 +1,76 @@
-# AgendaFacil Pro
+# AgendaFácil Pro
 
-Projeto em **Spring Boot 3 + Java 17** para agendamento online de pequenos estabelecimentos.
+![Java 17](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-6DB33F?logo=springboot&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
 
-## Requisitos
+Sistema web de agendamento para pequenos estabelecimentos e profissionais de serviços. O cliente agenda sem criar conta, enquanto o estabelecimento administra os atendimentos em um painel protegido.
+
+> **Status:** projeto de portfólio em desenvolvimento.
+
+## Funcionalidades
+
+- página pública de agendamento;
+- painel administrativo autenticado;
+- cadastro e organização de horários;
+- persistência com PostgreSQL;
+- validação de dados;
+- proteção com Spring Security e CSRF;
+- versionamento do banco com Flyway;
+- dados de demonstração para desenvolvimento local;
+- workflow de integração contínua no GitHub Actions.
+
+## Stack
 
 - Java 17
+- Spring Boot 3.3
+- Spring MVC e Thymeleaf
+- Spring Security
+- Spring Data JPA
+- PostgreSQL e Flyway
 - Maven
-- Docker, para subir o PostgreSQL local
+- Docker Compose
 
-## Rodar localmente
+## Como executar
 
-Suba o banco:
-
-```bash
+~~~bash
+git clone https://github.com/ArthurFancisco/AgendaFacil.git
+cd AgendaFacil
 docker compose up -d
-```
+~~~
 
-Configure a senha do banco por variável de ambiente. No PowerShell:
+Defina a senha local do banco antes de iniciar a aplicação.
 
-```powershell
-$env:DB_PASSWORD="agendafacil_dev"
+Linux/macOS:
+
+~~~bash
+export DB_PASSWORD=defina_uma_senha_local
 mvn spring-boot:run
-```
+~~~
 
-No Bash:
+PowerShell:
 
-```bash
-export DB_PASSWORD=agendafacil_dev
+~~~powershell
+$env:DB_PASSWORD="defina_uma_senha_local"
 mvn spring-boot:run
-```
+~~~
 
 Acesse:
 
-- Público: `http://localhost:8080/agenda/agenda-demo`
-- Painel: `http://localhost:8080/panel`
+- agenda pública: http://localhost:8080/agenda/agenda-demo
+- painel: http://localhost:8080/panel
 
-## Configuração
+## Variáveis de ambiente
 
-Variáveis aceitas:
+| Variável | Descrição |
+|---|---|
+| DB_URL | URL JDBC do PostgreSQL |
+| DB_USERNAME | usuário do banco |
+| DB_PASSWORD | senha do banco, obrigatória |
 
-- `DB_URL`, padrão `jdbc:postgresql://localhost:5432/agendafacil_pro`
-- `DB_USERNAME`, padrão `agendafacil`
-- `DB_PASSWORD`, sem valor padrão por segurança
+Não coloque senhas reais no código, nas migrations ou na documentação.
 
-## Observações
+## Autor
 
-- O painel usa Spring Security e CSRF.
-- Cliente final agenda sem criar conta.
-- Flyway cria a base local e dados de demonstração.
-- Não coloque senha real no código, no README ou em migrations.
+Desenvolvido por [Arthur Amancio Francisco](https://www.linkedin.com/in/arthur-amancio-francisco/) como projeto de estudo e portfólio.
