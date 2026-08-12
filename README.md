@@ -35,7 +35,7 @@ Sistema web de agendamento para pequenos estabelecimentos e profissionais de ser
 ## Como executar
 
 ~~~bash
-git clone https://github.com/ArthurFancisco/AgendaFacil.git
+git clone https://github.com/arthur-amancio/AgendaFacil.git
 cd AgendaFacil
 cp .env.example .env
 ~~~
