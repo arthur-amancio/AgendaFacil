@@ -46,6 +46,9 @@
 - [ ] Flyway executa sem alterar migrations antigas.
 - [ ] Aplicação sobe com credenciais via variáveis de ambiente.
 - [ ] Nenhuma senha real é adicionada ao repositório.
+- [ ] Sem o profile `demo`, o tenant e a credencial historica de demonstracao ficam desativados.
+- [ ] Com `dev,demo`, os dados de demonstracao funcionam somente para desenvolvimento local.
+- [ ] Com `prod,demo`, o ativador de demonstracao nao e carregado.
 
 ## Testes automatizados mínimos
 

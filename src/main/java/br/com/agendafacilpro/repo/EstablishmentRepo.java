@@ -8,5 +8,7 @@ import br.com.agendafacilpro.domain.Establishment;
 
 public interface EstablishmentRepo extends JpaRepository<Establishment, Long> {
 
+    Optional<Establishment> findBySlug(String slug);
+
     Optional<Establishment> findBySlugAndActiveTrue(String slug);
 }
