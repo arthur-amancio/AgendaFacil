@@ -9,6 +9,7 @@
 - [ ] A etapa de confirmação salva somente ao clicar em "Confirmar agendamento".
 - [ ] Tela de sucesso explica claramente se ficou confirmado ou pendente.
 - [ ] Tentar agendar horário ocupado exibe mensagem amigável e não cria duplicidade.
+- [ ] Duas confirmacoes concorrentes para o mesmo profissional e periodo resultam em exatamente uma reserva.
 - [ ] Reserva pendente bloqueia o horário enquanto válida.
 - [ ] Reserva pendente expirada libera o horário.
 - [ ] Cliente bloqueado não consegue agendar.
@@ -44,6 +45,7 @@
 ## Banco e configuração
 
 - [ ] Flyway executa sem alterar migrations antigas.
+- [ ] V8 falha sem alterar dados quando existem periodos invalidos ou reservas bloqueantes sobrepostas.
 - [ ] Aplicação sobe com credenciais via variáveis de ambiente.
 - [ ] Nenhuma senha real é adicionada ao repositório.
 - [ ] Fora da combinacao exclusiva `dev,demo`, o tenant e a credencial historica de demonstracao ficam desativados.

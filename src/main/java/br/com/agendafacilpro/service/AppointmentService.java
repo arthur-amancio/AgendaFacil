@@ -3,6 +3,7 @@ package br.com.agendafacilpro.service;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -11,6 +12,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,7 @@ import br.com.agendafacilpro.util.PhoneNormalizer;
 @Service
 public class AppointmentService {
 
+    private static final String OVERLAP_CONSTRAINT = "ex_appointments_no_blocking_overlap";
     private static final SecureRandom TOKEN_RANDOM = new SecureRandom();
     private static final LocalTime OPEN_TIME = LocalTime.of(8, 0);
     private static final LocalTime CLOSE_TIME = LocalTime.of(18, 0);
@@ -170,7 +173,7 @@ public class AppointmentService {
         appointment.setPublicToken(newPublicToken());
         appointment.setClientIp(ip);
         appointment.setStatus(requiresApproval(isNew, customer, serviceItem, settings) ? AppointmentStatus.PENDING_APPROVAL : AppointmentStatus.CONFIRMED);
-        return appointments.save(appointment);
+        return saveBooking(appointment);
     }
 
     /**
@@ -212,7 +215,7 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.CONFIRMED);
         appointment.setClientIp("manual");
         appointment.setInternalNote(blankToNull(request.internalNote()));
-        appointment = appointments.save(appointment);
+        appointment = saveBooking(appointment);
 
         audit.record(appointment, user, "MANUAL_CREATE", manualAuditDetails(existingCustomer.isPresent(), customer));
         return appointment;
@@ -358,10 +361,14 @@ public class AppointmentService {
         List<Appointment> expired = new ArrayList<>();
         expired.addAll(appointments.findByEstablishmentIdAndStatusAndStartAtBefore(est, AppointmentStatus.PENDING_APPROVAL, now));
         expired.addAll(appointments.findByEstablishmentIdAndStatusAndCreatedAtBefore(est, AppointmentStatus.PENDING_APPROVAL, now.minusMinutes(settings.getPendingExpirationMinutes())));
-        expired.stream().distinct().forEach(appointment -> {
+        List<Appointment> distinctExpired = expired.stream().distinct().toList();
+        distinctExpired.forEach(appointment -> {
             appointment.setStatus(AppointmentStatus.EXPIRED);
             appointment.setCancellationReason("Reserva pendente expirou automaticamente");
         });
+        if (!distinctExpired.isEmpty()) {
+            appointments.flush();
+        }
     }
 
     private Appointment owned(Long id, Long est) {
@@ -491,6 +498,33 @@ public class AppointmentService {
     private boolean isExpiredPending(Appointment appointment, EstablishmentSettings settings, LocalDateTime now) {
         return !appointment.getStartAt().isAfter(now)
                 || appointment.getCreatedAt().plusMinutes(settings.getPendingExpirationMinutes()).isBefore(now);
+    }
+
+    private Appointment saveBooking(Appointment appointment) {
+        try {
+            return appointments.saveAndFlush(appointment);
+        } catch (DataIntegrityViolationException ex) {
+            if (isOverlapViolation(ex)) {
+                throw new BookingConflictException(ex);
+            }
+            throw ex;
+        }
+    }
+
+    private boolean isOverlapViolation(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof SQLException sqlException
+                    && "23P01".equals(sqlException.getSQLState())) {
+                return true;
+            }
+            String message = current.getMessage();
+            if (message != null && message.contains(OVERLAP_CONSTRAINT)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private String newPublicToken() {

@@ -89,7 +89,7 @@ class AppointmentServiceNoShowTest {
                 .thenReturn(false);
         when(customers.findByEstablishmentIdAndPhoneNormalized(1L, "17988887777")).thenReturn(Optional.of(customer));
         when(customers.save(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(appointments.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(appointments.saveAndFlush(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Appointment appointment = service.create(
                 establishment,

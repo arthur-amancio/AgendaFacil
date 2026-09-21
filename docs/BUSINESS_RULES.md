@@ -59,6 +59,11 @@ Consequências:
 - um horário que termina exatamente quando o próximo começa não conflita;
 - um horário que começa exatamente quando o anterior termina não conflita.
 
+Essa regra e reforcada no PostgreSQL pela exclusion constraint
+`ex_appointments_no_blocking_overlap`, usando intervalos `[inicio, fim)` para
+status `CONFIRMED` e `PENDING_APPROVAL`. A consulta previa do backend melhora a
+experiencia, mas a constraint e a garantia final contra requisicoes concorrentes.
+
 ## Faltas
 
 - Marcar falta muda o agendamento de `CONFIRMED` para `NO_SHOW`.
