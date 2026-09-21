@@ -12,7 +12,7 @@ import br.com.agendafacilpro.repo.EstablishmentRepo;
 import br.com.agendafacilpro.repo.UserRepo;
 
 @Component
-@Profile("demo & !prod")
+@Profile("dev & demo & !prod")
 public class DemoDataActivator implements ApplicationRunner {
 
     static final String DEMO_SLUG = "agenda-demo";

@@ -14,7 +14,7 @@ import br.com.agendafacilpro.repo.EstablishmentRepo;
 import br.com.agendafacilpro.repo.UserRepo;
 
 @Component
-@Profile("!demo | prod")
+@Profile("!demo | !dev | prod")
 public class DemoDataDeactivator implements ApplicationRunner {
 
     static final String DISABLED_PASSWORD_HASH = "!disabled-demo-account!";

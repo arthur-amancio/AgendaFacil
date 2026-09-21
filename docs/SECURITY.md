@@ -29,12 +29,11 @@ ser reescritas, pois podem ter sido aplicadas em bancos existentes. A V7 desativ
 o estabelecimento `agenda-demo`, todos os seus usuarios e a credencial conhecida.
 Ela tambem substitui o hash historico por um valor que nao e aceito pelo encoder.
 
-Para desenvolvimento local, os dados so sao reativados com o profile explicito
-`demo`, normalmente junto de `dev`. O ativador nao e carregado se o profile `prod`
-tambem estiver ativo. Fora do profile `demo`, a aplicacao repete a neutralizacao
-de forma idempotente a cada inicializacao; assim, um banco usado anteriormente
-como demo nao mantem a credencial ativa ao iniciar em producao. Nunca use `demo`
-em uma instalacao publicada.
+Para desenvolvimento local, os dados so sao reativados quando os profiles `dev`
+e `demo` estao explicitamente ativos e `prod` esta ausente. Qualquer outra
+combinacao repete a neutralizacao de forma idempotente a cada inicializacao;
+assim, um banco usado anteriormente como demo nao mantem a credencial ativa ao
+iniciar em staging, QA ou producao. Nunca use `demo` em uma instalacao publicada.
 
 Antes de atualizar um banco ainda anterior a V5, consulte `flyway_schema_history`
 e verifique os registros com IDs fixos usados por ela: estabelecimento 1,

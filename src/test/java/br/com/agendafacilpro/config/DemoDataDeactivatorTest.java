@@ -49,13 +49,17 @@ class DemoDataDeactivatorTest {
     }
 
     @Test
-    void profileRunsByDefaultAndInProductionEvenIfDemoWasAlsoRequested() {
+    void profileCoversEveryCombinationExceptDevAndDemoWithoutProduction() {
         Profile profile = DemoDataDeactivator.class.getAnnotation(Profile.class);
         Profiles expression = Profiles.of(profile.value());
 
         assertThat(new MockEnvironment().withProperty("spring.profiles.active", "dev").acceptsProfiles(expression)).isTrue();
-        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "demo").acceptsProfiles(expression)).isFalse();
+        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "demo").acceptsProfiles(expression)).isTrue();
+        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "dev,demo").acceptsProfiles(expression)).isFalse();
+        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "staging,demo").acceptsProfiles(expression)).isTrue();
+        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "prod").acceptsProfiles(expression)).isTrue();
         assertThat(new MockEnvironment().withProperty("spring.profiles.active", "demo,prod").acceptsProfiles(expression)).isTrue();
+        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "dev,demo,prod").acceptsProfiles(expression)).isTrue();
     }
 
     private Establishment establishment(Long id, boolean active) {

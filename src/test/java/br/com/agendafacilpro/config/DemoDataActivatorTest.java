@@ -56,13 +56,17 @@ class DemoDataActivatorTest {
     }
 
     @Test
-    void profileIsExplicitAndCannotRunTogetherWithProduction() {
+    void profileRequiresDevAndDemoWithoutProduction() {
         Profile profile = DemoDataActivator.class.getAnnotation(Profile.class);
         Profiles expression = Profiles.of(profile.value());
 
-        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "demo").acceptsProfiles(expression)).isTrue();
         assertThat(new MockEnvironment().withProperty("spring.profiles.active", "dev").acceptsProfiles(expression)).isFalse();
+        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "demo").acceptsProfiles(expression)).isFalse();
+        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "dev,demo").acceptsProfiles(expression)).isTrue();
+        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "staging,demo").acceptsProfiles(expression)).isFalse();
+        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "prod").acceptsProfiles(expression)).isFalse();
         assertThat(new MockEnvironment().withProperty("spring.profiles.active", "demo,prod").acceptsProfiles(expression)).isFalse();
+        assertThat(new MockEnvironment().withProperty("spring.profiles.active", "dev,demo,prod").acceptsProfiles(expression)).isFalse();
     }
 
     private Establishment establishment(Long id, boolean active) {

@@ -64,10 +64,9 @@ $env:SPRING_PROFILES_ACTIVE="dev,demo"
 mvn spring-boot:run
 ~~~
 
-O profile `demo` e opt-in e deve ser usado somente no banco local. Sem ele, a
-migration mais recente mantem o estabelecimento e a credencial historica de
-demonstracao desativados. O profile `demo` tambem nao e carregado quando `prod`
-esta ativo.
+Os profiles `dev,demo` sao opt-in e devem estar ativos juntos somente no banco
+local. Qualquer outra combinacao, inclusive `demo` isolado ou junto de `prod`,
+mantem o estabelecimento e a credencial historica de demonstracao desativados.
 
 Acesse:
 
