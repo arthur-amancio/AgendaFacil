@@ -24,7 +24,23 @@ Não salvar senha real no código, em documentação ou em migrations novas. Use
 - `DB_USERNAME`
 - `DB_PASSWORD`
 
-A migration inicial contém dados locais de demonstração. Antes de usar fora do ambiente local, trocar credenciais e seeds de demonstração por dados reais provisionados com processo seguro.
+As migrations historicas V1 e V5 contem dados locais de demonstracao e nao devem
+ser reescritas, pois podem ter sido aplicadas em bancos existentes. A V7 desativa
+o estabelecimento `agenda-demo`, todos os seus usuarios e a credencial conhecida.
+Ela tambem substitui o hash historico por um valor que nao e aceito pelo encoder.
+
+Para desenvolvimento local, os dados so sao reativados quando os profiles `dev`
+e `demo` estao explicitamente ativos e `prod` esta ausente. Qualquer outra
+combinacao repete a neutralizacao de forma idempotente a cada inicializacao;
+assim, um banco usado anteriormente como demo nao mantem a credencial ativa ao
+iniciar em staging, QA ou producao. Nunca use `demo` em uma instalacao publicada.
+
+Antes de atualizar um banco ainda anterior a V5, consulte `flyway_schema_history`
+e verifique os registros com IDs fixos usados por ela: estabelecimento 1,
+servicos 1 a 4 e profissionais 1 a 3. A V5 historica usa atualizacoes por ID e
+`ON CONFLICT (id) DO UPDATE`; se algum desses IDs ja contiver dado real,
+interrompa o deploy, faca backup e resolva a colisao antes de executar as
+migrations.
 
 ## Proteção contra acesso cruzado
 

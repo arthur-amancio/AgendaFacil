@@ -52,6 +52,7 @@ Linux/macOS:
 
 ~~~bash
 export DB_PASSWORD="<mesmo valor definido no .env>"
+export SPRING_PROFILES_ACTIVE="dev,demo"
 mvn spring-boot:run
 ~~~
 
@@ -59,8 +60,13 @@ PowerShell:
 
 ~~~powershell
 $env:DB_PASSWORD="<mesmo valor definido no .env>"
+$env:SPRING_PROFILES_ACTIVE="dev,demo"
 mvn spring-boot:run
 ~~~
+
+Os profiles `dev,demo` sao opt-in e devem estar ativos juntos somente no banco
+local. Qualquer outra combinacao, inclusive `demo` isolado ou junto de `prod`,
+mantem o estabelecimento e a credencial historica de demonstracao desativados.
 
 Acesse:
 
@@ -74,6 +80,7 @@ Acesse:
 | DB_URL | URL JDBC do PostgreSQL |
 | DB_USERNAME | usuário do banco |
 | DB_PASSWORD | senha do banco, obrigatória |
+| SPRING_PROFILES_ACTIVE | use `dev,demo` apenas para habilitar a demonstracao local; em producao use `prod` |
 
 O arquivo .env é ignorado pelo Git. Não publique senhas reais no código, nas migrations ou na documentação.
 
