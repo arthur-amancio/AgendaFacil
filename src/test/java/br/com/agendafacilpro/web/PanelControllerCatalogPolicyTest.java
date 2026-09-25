@@ -9,6 +9,10 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Clock;
+import java.time.ZoneId;
+import java.time.DayOfWeek;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,22 +30,26 @@ import br.com.agendafacilpro.repo.ServiceItemRepo;
 import br.com.agendafacilpro.repo.TimeBlockRepo;
 import br.com.agendafacilpro.service.AppointmentService;
 import br.com.agendafacilpro.service.BookingConflictException;
+import br.com.agendafacilpro.service.BusinessHoursService;
 import br.com.agendafacilpro.service.CurrentUserService;
 import br.com.agendafacilpro.service.DashboardService;
 import br.com.agendafacilpro.service.EstablishmentSettingsService;
 import br.com.agendafacilpro.service.ManualAppointmentRequest;
+import br.com.agendafacilpro.web.form.WeeklyBusinessHoursForm;
 
 class PanelControllerCatalogPolicyTest {
 
     private final FakeCurrentUserService current = new FakeCurrentUserService();
-    private final DashboardService dashboard = new DashboardService(null, null);
+    private final Clock clock = Clock.system(ZoneId.of("America/Sao_Paulo"));
+    private final DashboardService dashboard = new DashboardService(null, null, clock);
     private final FakeAppointmentService appointments = new FakeAppointmentService();
     private final ServiceItemRepo services = mock(ServiceItemRepo.class);
     private final ProfessionalRepo professionals = mock(ProfessionalRepo.class);
     private final TimeBlockRepo blocks = mock(TimeBlockRepo.class);
     private final CustomerRepo customers = mock(CustomerRepo.class);
     private final EstablishmentSettingsService settings = new EstablishmentSettingsService(null);
-    private final PanelController controller = new PanelController(current, dashboard, appointments, services, professionals, blocks, customers, settings);
+    private final BusinessHoursService businessHours = mock(BusinessHoursService.class);
+    private final PanelController controller = new PanelController(current, dashboard, appointments, services, professionals, blocks, customers, settings, businessHours, clock);
 
     private Establishment establishment;
 
@@ -66,6 +74,22 @@ class PanelControllerCatalogPolicyTest {
 
         assertThat(route).isEqualTo("redirect:/panel/services");
         verify(services).delete(service);
+    }
+
+    @Test
+    void weeklyHoursUpdateUsesAuthenticatedEstablishment() {
+        WeeklyBusinessHoursForm form = new WeeklyBusinessHoursForm();
+        form.setHours(Arrays.stream(DayOfWeek.values()).map(day -> {
+            WeeklyBusinessHoursForm.DayHours hours = new WeeklyBusinessHoursForm.DayHours();
+            hours.setDayOfWeek(day);
+            hours.setOpen(false);
+            return hours;
+        }).toList());
+
+        String route = controller.businessHours(form, new RedirectAttributesModelMap());
+
+        assertThat(route).isEqualTo("redirect:/panel/settings");
+        verify(businessHours).update(org.mockito.ArgumentMatchers.same(establishment), any());
     }
 
     @Test
@@ -201,7 +225,7 @@ class PanelControllerCatalogPolicyTest {
         private boolean conflictOnCreate;
 
         FakeAppointmentService() {
-            super(null, null, null, null, null, null, null, null, null);
+            super(null, null, null, null, null, null, null, null, null, null, null);
         }
 
         @Override

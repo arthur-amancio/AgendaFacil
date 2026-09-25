@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Clock;
+import java.time.ZoneId;
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -30,7 +33,7 @@ class PublicBookingControllerFlowTest {
     private final Professional professional = professional(establishment, service);
     private final FakeCatalogService catalog = new FakeCatalogService(establishment, service, professional);
     private final FakeAppointmentService appointments = new FakeAppointmentService();
-    private final PublicBookingController controller = new PublicBookingController(catalog, appointments, new FakeSettingsService());
+    private final PublicBookingController controller = new PublicBookingController(catalog, appointments, new FakeSettingsService(), Clock.system(ZoneId.of("America/Sao_Paulo")));
 
     @Test
     void reviewStepDoesNotPersistAppointment() {
@@ -45,6 +48,16 @@ class PublicBookingControllerFlowTest {
         assertThat(view).isEqualTo("public/confirm");
         assertThat(appointments.validated).isEqualTo(1);
         assertThat(appointments.created).isZero();
+    }
+
+    @Test
+    void defaultScheduleDateUsesSaoPauloNearUtcMidnight() {
+        Clock nearMidnight = Clock.fixed(Instant.parse("2030-01-08T02:30:00Z"), ZoneId.of("America/Sao_Paulo"));
+        PublicBookingController timezoneController = new PublicBookingController(catalog, appointments, new FakeSettingsService(), nearMidnight);
+
+        timezoneController.slots("agenda-demo", 2L, 3L, null, new ExtendedModelMap());
+
+        assertThat(appointments.lastSlotsDate).isEqualTo(LocalDate.of(2030, 1, 7));
     }
 
     @Test
@@ -180,9 +193,10 @@ class PublicBookingControllerFlowTest {
         private int validated;
         private int created;
         private boolean conflictOnCreate;
+        private LocalDate lastSlotsDate;
 
         FakeAppointmentService() {
-            super(null, null, null, null, null, null, null, null, null);
+            super(null, null, null, null, null, null, null, null, null, null, null);
         }
 
         @Override
@@ -204,6 +218,7 @@ class PublicBookingControllerFlowTest {
 
         @Override
         public List<AppointmentService.Slot> slots(Long est, Long serviceId, Long professionalId, LocalDate date) {
+            lastSlotsDate = date;
             return List.of(
                     new AppointmentService.Slot(
                             LocalTime.of(8, 0),

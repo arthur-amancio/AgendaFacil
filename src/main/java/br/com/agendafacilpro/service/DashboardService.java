@@ -2,6 +2,7 @@ package br.com.agendafacilpro.service;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -21,10 +22,12 @@ public class DashboardService {
 
     private final AppointmentRepo appointments;
     private final AppointmentService appointmentService;
+    private final Clock clock;
 
-    public DashboardService(AppointmentRepo a, AppointmentService s) {
+    public DashboardService(AppointmentRepo a, AppointmentService s, Clock clock) {
         appointments = a;
         appointmentService = s;
+        this.clock = clock;
     }
 
     public record Metric(String label, long value, String hint) {
@@ -53,13 +56,13 @@ public class DashboardService {
 
     @Transactional
     public Data data(Long est) {
-        return data(est, new Filter(LocalDate.now(), LocalDate.now(), null, null));
+        return data(est, new Filter(LocalDate.now(clock), LocalDate.now(clock), null, null));
     }
 
     @Transactional
     public Data data(Long est, Filter filter) {
         appointmentService.expire(est);
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         LocalDateTime start = today.atStartOfDay();
         LocalDateTime end = today.plusDays(1).atStartOfDay();
         LocalDateTime end7 = today.plusDays(7).atTime(LocalTime.MAX);
@@ -70,7 +73,7 @@ public class DashboardService {
         }
         List<Metric> metrics = List.of(
                 new Metric("Agendamentos hoje", appointments.countByEstablishmentIdAndStartAtBetween(est, start, end), "Tudo que entrou para hoje"),
-                new Metric("Pendentes", appointments.countByEstablishmentIdAndStatusAndStartAtBetween(est, AppointmentStatus.PENDING_APPROVAL, LocalDateTime.now().minusYears(3), end7), "Esperando aprovação"),
+                new Metric("Pendentes", appointments.countByEstablishmentIdAndStatusAndStartAtBetween(est, AppointmentStatus.PENDING_APPROVAL, LocalDateTime.now(clock).minusYears(3), end7), "Esperando aprovação"),
                 new Metric("Concluídos hoje", appointments.countByEstablishmentIdAndStatusAndStartAtBetween(est, AppointmentStatus.COMPLETED, start, end), "Atendimentos finalizados"),
                 new Metric("Faltas hoje", appointments.countByEstablishmentIdAndStatusAndStartAtBetween(est, AppointmentStatus.NO_SHOW, start, end), "Clientes que não vieram"),
                 new Metric("Próximos 7 dias", appointments.countByEstablishmentIdAndStatusInAndStartAtBetween(est, List.of(AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING_APPROVAL), start, end7), "Horários ativos")
@@ -95,7 +98,7 @@ public class DashboardService {
     @Transactional
     public Reports reports(Long est) {
         appointmentService.expire(est);
-        YearMonth month = YearMonth.now();
+        YearMonth month = YearMonth.now(clock);
         LocalDateTime start = month.atDay(1).atStartOfDay();
         LocalDateTime end = month.plusMonths(1).atDay(1).atStartOfDay();
         long completed = appointments.countByEstablishmentIdAndStatusAndStartAtBetween(est, AppointmentStatus.COMPLETED, start, end);

@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -38,9 +39,6 @@ public class AppointmentService {
 
     private static final String OVERLAP_CONSTRAINT = "ex_appointments_no_blocking_overlap";
     private static final SecureRandom TOKEN_RANDOM = new SecureRandom();
-    private static final LocalTime OPEN_TIME = LocalTime.of(8, 0);
-    private static final LocalTime CLOSE_TIME = LocalTime.of(18, 0);
-    private static final int SLOT_STEP_MINUTES = 30;
 
     private final AppointmentRepo appointments;
     private final CustomerRepo customers;
@@ -51,8 +49,10 @@ public class AppointmentService {
     private final AppointmentViewUtil view;
     private final AppointmentAuditService audit;
     private final EstablishmentSettingsService settingsService;
+    private final BusinessHoursService businessHours;
+    private final Clock clock;
 
-    public AppointmentService(AppointmentRepo a, CustomerRepo c, ServiceItemRepo s, ProfessionalRepo p, TimeBlockRepo b, BookingGuardService g, AppointmentViewUtil v, AppointmentAuditService audit, EstablishmentSettingsService settingsService) {
+    public AppointmentService(AppointmentRepo a, CustomerRepo c, ServiceItemRepo s, ProfessionalRepo p, TimeBlockRepo b, BookingGuardService g, AppointmentViewUtil v, AppointmentAuditService audit, EstablishmentSettingsService settingsService, BusinessHoursService businessHours, Clock clock) {
         appointments = a;
         customers = c;
         services = s;
@@ -62,6 +62,8 @@ public class AppointmentService {
         view = v;
         this.audit = audit;
         this.settingsService = settingsService;
+        this.businessHours = businessHours;
+        this.clock = clock;
     }
 
     public enum SlotReason {
@@ -105,13 +107,12 @@ public class AppointmentService {
         ServiceItem serviceItem = services.findByIdAndEstablishmentId(serviceId, est).orElseThrow();
         Professional professional = professionals.findByIdAndEstablishmentId(professionalId, est).orElseThrow();
         List<Slot> out = new ArrayList<>();
-        LocalTime t = OPEN_TIME;
-        while (t.isBefore(CLOSE_TIME)) {
+        var dailyHours = businessHours.hours(est, date).orElse(null);
+        for (LocalTime t : businessHours.starts(dailyHours)) {
             LocalDateTime start = LocalDateTime.of(date, t);
             LocalDateTime end = start.plusMinutes(serviceItem.getDurationMinutes());
             SlotReason reason = slotReason(est, professional, serviceItem, start, end);
             out.add(new Slot(t, end.toLocalTime(), reason == SlotReason.AVAILABLE, reason, reason.label(), suggestionFor(est, serviceItem, professional, start, reason)));
-            t = t.plusMinutes(SLOT_STEP_MINUTES);
         }
         return out;
     }
@@ -148,7 +149,7 @@ public class AppointmentService {
         LocalDateTime start = LocalDateTime.of(date, time);
         LocalDateTime end = start.plusMinutes(serviceItem.getDurationMinutes());
         validateSubmittedSlot(est.getId(), professional, serviceItem, start, end);
-        if (appointments.countFutureByPhone(est.getId(), decision.normalizedPhone(), AppointmentRules.blockingStatuses(), LocalDateTime.now()) >= settings.getMaxFutureAppointmentsPerPhone()) {
+        if (appointments.countFutureByPhone(est.getId(), decision.normalizedPhone(), AppointmentRules.blockingStatuses(), LocalDateTime.now(clock)) >= settings.getMaxFutureAppointmentsPerPhone()) {
             throw new IllegalArgumentException("Para marcar um novo horário, fale com o estabelecimento.");
         }
 
@@ -173,6 +174,7 @@ public class AppointmentService {
         appointment.setPublicToken(newPublicToken());
         appointment.setClientIp(ip);
         appointment.setStatus(requiresApproval(isNew, customer, serviceItem, settings) ? AppointmentStatus.PENDING_APPROVAL : AppointmentStatus.CONFIRMED);
+        initializeBookingTimestamps(appointment);
         return saveBooking(appointment);
     }
 
@@ -215,6 +217,7 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.CONFIRMED);
         appointment.setClientIp("manual");
         appointment.setInternalNote(blankToNull(request.internalNote()));
+        initializeBookingTimestamps(appointment);
         appointment = saveBooking(appointment);
 
         audit.record(appointment, user, "MANUAL_CREATE", manualAuditDetails(existingCustomer.isPresent(), customer));
@@ -263,14 +266,14 @@ public class AppointmentService {
             throw new IllegalStateException("Essa reserva não está pendente.");
         }
         EstablishmentSettings settings = settingsService.forEstablishmentId(est);
-        if (isExpiredPending(appointment, settings, LocalDateTime.now())) {
+        if (isExpiredPending(appointment, settings, LocalDateTime.now(clock))) {
             appointment.setStatus(AppointmentStatus.EXPIRED);
             appointment.setCancellationReason("Reserva pendente expirou antes da aprovação");
             throw new IllegalStateException("Essa reserva pendente expirou antes da aprovação. O horário voltou a ficar disponível.");
         }
         noConflict(est, appointment.getProfessional().getId(), appointment.getStartAt(), appointment.getEndAt(), appointment.getId());
         appointment.setStatus(AppointmentStatus.CONFIRMED);
-        appointment.setApprovedAt(LocalDateTime.now());
+        appointment.setApprovedAt(LocalDateTime.now(clock));
         recordAudit(appointment, user, "APPROVE", "Reserva aprovada pelo painel");
     }
 
@@ -324,7 +327,7 @@ public class AppointmentService {
             throw new IllegalStateException("Somente confirmados podem ser concluídos.");
         }
         appointment.setStatus(AppointmentStatus.COMPLETED);
-        appointment.setCompletedAt(LocalDateTime.now());
+        appointment.setCompletedAt(LocalDateTime.now(clock));
         recordAudit(appointment, user, "COMPLETE", "Atendimento concluido pelo painel");
     }
 
@@ -357,7 +360,7 @@ public class AppointmentService {
 
     @Transactional
     public void expire(Long est, EstablishmentSettings settings) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         List<Appointment> expired = new ArrayList<>();
         expired.addAll(appointments.findByEstablishmentIdAndStatusAndStartAtBefore(est, AppointmentStatus.PENDING_APPROVAL, now));
         expired.addAll(appointments.findByEstablishmentIdAndStatusAndCreatedAtBefore(est, AppointmentStatus.PENDING_APPROVAL, now.minusMinutes(settings.getPendingExpirationMinutes())));
@@ -400,13 +403,14 @@ public class AppointmentService {
         if (!professional.isActive() || !professional.performs(serviceItem) && !professionals.existsActiveQualified(est, professional.getId(), serviceItem.getId())) {
             return SlotReason.PROFESSIONAL_UNAVAILABLE;
         }
-        if (!isSlotStart(start.toLocalTime()) || start.toLocalTime().isBefore(OPEN_TIME) || !start.toLocalTime().isBefore(CLOSE_TIME)) {
+        var dailyHours = businessHours.hours(est, start.toLocalDate()).orElse(null);
+        if (dailyHours == null || !dailyHours.isOpen()) {
             return SlotReason.CLOSED;
         }
-        if (!end.toLocalDate().equals(start.toLocalDate()) || end.toLocalTime().isAfter(CLOSE_TIME)) {
+        if (!businessHours.fits(dailyHours, start, end)) {
             return SlotReason.DOES_NOT_FIT;
         }
-        if (!start.isAfter(LocalDateTime.now().minusMinutes(1))) {
+        if (!start.isAfter(LocalDateTime.now(clock).minusMinutes(1))) {
             return SlotReason.PAST;
         }
         if (blocks.existsOverlap(est, professional.getId(), start, end)) {
@@ -418,26 +422,21 @@ public class AppointmentService {
         return SlotReason.AVAILABLE;
     }
 
-    private boolean isSlotStart(LocalTime time) {
-        return time.getSecond() == 0
-                && time.getNano() == 0
-                && time.getMinute() % SLOT_STEP_MINUTES == 0;
-    }
-
     private String suggestionFor(Long est, ServiceItem serviceItem, Professional professional, LocalDateTime start, SlotReason reason) {
         if (reason != SlotReason.CONFLICT && reason != SlotReason.DOES_NOT_FIT) {
             return null;
         }
         List<String> suggestions = new ArrayList<>();
         List<String> nextTimes = new ArrayList<>();
-        LocalTime next = start.toLocalTime().plusMinutes(SLOT_STEP_MINUTES);
-        while (next.isBefore(CLOSE_TIME) && nextTimes.size() < 3) {
+        var dailyHours = businessHours.hours(est, start.toLocalDate()).orElse(null);
+        List<LocalTime> dailyStarts = businessHours.starts(dailyHours);
+        for (LocalTime next : dailyStarts.stream().filter(t -> t.isAfter(start.toLocalTime())).toList()) {
+            if (nextTimes.size() >= 3) break;
             LocalDateTime candidateStart = LocalDateTime.of(start.toLocalDate(), next);
             LocalDateTime candidateEnd = candidateStart.plusMinutes(serviceItem.getDurationMinutes());
             if (slotReason(est, professional, serviceItem, candidateStart, candidateEnd) == SlotReason.AVAILABLE) {
                 nextTimes.add(next.toString());
             }
-            next = next.plusMinutes(SLOT_STEP_MINUTES);
         }
         if (!nextTimes.isEmpty()) {
             suggestions.add("Tente " + String.join(", ", nextTimes) + " com " + professional.getName() + ".");
@@ -509,6 +508,12 @@ public class AppointmentService {
             }
             throw ex;
         }
+    }
+
+    private void initializeBookingTimestamps(Appointment appointment) {
+        LocalDateTime now = LocalDateTime.now(clock);
+        appointment.setCreatedAt(now);
+        appointment.setUpdatedAt(now);
     }
 
     private boolean isOverlapViolation(Throwable error) {

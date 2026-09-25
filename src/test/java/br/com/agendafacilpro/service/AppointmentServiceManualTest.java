@@ -14,6 +14,9 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Clock;
+import java.time.DayOfWeek;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,10 +31,12 @@ import br.com.agendafacilpro.domain.Appointment;
 import br.com.agendafacilpro.domain.AppointmentStatus;
 import br.com.agendafacilpro.domain.Customer;
 import br.com.agendafacilpro.domain.Establishment;
+import br.com.agendafacilpro.domain.EstablishmentBusinessHours;
 import br.com.agendafacilpro.domain.EstablishmentSettings;
 import br.com.agendafacilpro.domain.Professional;
 import br.com.agendafacilpro.domain.ServiceItem;
 import br.com.agendafacilpro.repo.AppointmentRepo;
+import br.com.agendafacilpro.repo.EstablishmentBusinessHoursRepo;
 import br.com.agendafacilpro.repo.CustomerRepo;
 import br.com.agendafacilpro.repo.ProfessionalRepo;
 import br.com.agendafacilpro.repo.ServiceItemRepo;
@@ -48,6 +53,8 @@ class AppointmentServiceManualTest {
     private final FakeSettingsService settings = new FakeSettingsService();
     private final BookingGuardService guard = new BookingGuardService(null, settings);
     private final FakeAuditService audit = new FakeAuditService();
+    private final EstablishmentBusinessHoursRepo hoursRepo = mock(EstablishmentBusinessHoursRepo.class);
+    private final BusinessHoursService businessHours = new BusinessHoursService(hoursRepo);
     private final AppointmentService service = new AppointmentService(
             appointments,
             customers,
@@ -57,7 +64,9 @@ class AppointmentServiceManualTest {
             guard,
             new AppointmentViewUtil(),
             audit,
-            settings
+            settings,
+            businessHours,
+            Clock.system(ZoneId.of("America/Sao_Paulo"))
     );
 
     private Establishment establishment;
@@ -72,6 +81,7 @@ class AppointmentServiceManualTest {
         serviceItem = serviceItem(establishment);
         professional = professional(establishment);
         professional.getServices().add(serviceItem);
+        when(hoursRepo.findByEstablishmentIdAndDayOfWeek(eq(1L), any(DayOfWeek.class))).thenReturn(Optional.of(hours(establishment)));
 
         when(appointments.findByEstablishmentIdAndStatusAndStartAtBefore(eq(1L), eq(AppointmentStatus.PENDING_APPROVAL), any(LocalDateTime.class))).thenReturn(List.of());
         when(appointments.findByEstablishmentIdAndStatusAndCreatedAtBefore(eq(1L), eq(AppointmentStatus.PENDING_APPROVAL), any(LocalDateTime.class))).thenReturn(List.of());
@@ -159,6 +169,47 @@ class AppointmentServiceManualTest {
     }
 
     @Test
+    void missingBusinessHoursFailsClosedForManualBooking() {
+        when(hoursRepo.findByEstablishmentIdAndDayOfWeek(eq(1L), any(DayOfWeek.class))).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.createManual(establishment, user, request("Ana Cliente", "(17) 98888-7777")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("não está disponível");
+        verify(appointments, never()).saveAndFlush(any(Appointment.class));
+    }
+
+    @Test
+    void slotGridIsAnchoredAtConfiguredOpeningTime() {
+        EstablishmentBusinessHours configured = hours(establishment);
+        configured.setOpeningTime(LocalTime.of(8, 15));
+        configured.setClosingTime(LocalTime.of(10, 0));
+        when(hoursRepo.findByEstablishmentIdAndDayOfWeek(eq(1L), any(DayOfWeek.class))).thenReturn(Optional.of(configured));
+
+        List<AppointmentService.Slot> slots = service.slots(1L, 2L, 3L, LocalDate.now().plusDays(1));
+
+        assertThat(slots).extracting(AppointmentService.Slot::start)
+                .containsExactly(LocalTime.of(8, 15), LocalTime.of(8, 45), LocalTime.of(9, 15), LocalTime.of(9, 45));
+        assertThat(slots.get(3).available()).isFalse();
+    }
+
+    @Test
+    void professionalSpecificTimeBlockDoesNotAffectAnotherProfessional() {
+        Professional second = professional(establishment);
+        second.setId(4L);
+        second.setName("Camila");
+        second.getServices().add(serviceItem);
+        when(professionals.findByIdAndEstablishmentId(4L, 1L)).thenReturn(Optional.of(second));
+        when(blocks.existsOverlap(eq(1L), eq(3L), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(true);
+        when(blocks.existsOverlap(eq(1L), eq(4L), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(false);
+
+        List<AppointmentService.Slot> blocked = service.slots(1L, 2L, 3L, LocalDate.now().plusDays(1));
+        List<AppointmentService.Slot> available = service.slots(1L, 2L, 4L, LocalDate.now().plusDays(1));
+
+        assertThat(blocked).allSatisfy(slot -> assertThat(slot.available()).isFalse());
+        assertThat(available).anySatisfy(slot -> assertThat(slot.available()).isTrue());
+    }
+
+    @Test
     void manualBookingExpiresOldPendingBeforeCheckingConflict() {
         when(customers.findByEstablishmentIdAndPhoneNormalized(1L, "17988887777")).thenReturn(Optional.empty());
 
@@ -230,6 +281,16 @@ class AppointmentServiceManualTest {
         e.setSlug("teste");
         e.setWhatsapp("5517999999999");
         return e;
+    }
+
+    private EstablishmentBusinessHours hours(Establishment establishment) {
+        EstablishmentBusinessHours hours = new EstablishmentBusinessHours();
+        hours.setEstablishment(establishment);
+        hours.setDayOfWeek(DayOfWeek.MONDAY);
+        hours.setOpen(true);
+        hours.setOpeningTime(LocalTime.of(8, 0));
+        hours.setClosingTime(LocalTime.of(18, 0));
+        return hours;
     }
 
     private AppUser user(Establishment establishment) {

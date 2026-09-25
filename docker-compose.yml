@@ -6,6 +6,8 @@ services:
       POSTGRES_DB: agendafacil_pro
       POSTGRES_USER: agendafacil
       POSTGRES_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
+      TZ: ${APP_TIME_ZONE:-America/Sao_Paulo}
+      PGTZ: ${APP_TIME_ZONE:-America/Sao_Paulo}
     ports:
       - "5432:5432"
     volumes:

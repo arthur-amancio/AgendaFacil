@@ -153,6 +153,17 @@ As configuracoes nunca mudam a identidade do cliente: telefone normalizado + est
 - O slot é recusado se estiver no passado, fora da grade, bloqueado por `TimeBlock`, em conflito com agendamento bloqueante ou se o serviço não couber antes do fim do expediente.
 - Mensagem padrão para horário manipulado ou indisponível: "Esse horário não está disponível para este serviço."
 
+## Horário semanal
+
+- Cada estabelecimento possui configuração independente para os sete dias.
+- Um dia aberto possui um único intervalo, com abertura anterior ao fechamento.
+- Um dia fechado não possui horários e não gera slots reserváveis.
+- A grade permanece em 30 minutos e começa no horário de abertura do dia.
+- O serviço pode terminar exatamente no fechamento, mas nunca ultrapassá-lo.
+- Configuração ausente falha de forma fechada e não usa expediente padrão em runtime.
+- Almoço, pausas, feriados, férias e outras exceções continuam em `TimeBlock`.
+- O timezone explícito do MVP é `America/Sao_Paulo`.
+
 ## Confirmação antes de salvar
 
 - A etapa de dados não salva o agendamento.

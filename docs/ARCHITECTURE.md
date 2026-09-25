@@ -128,6 +128,8 @@ A página pública cria solicitações de agendamento e não exige login do clie
 
 Ambos os lados usam as mesmas regras centrais de disponibilidade e conflito em `AppointmentService`.
 
+O expediente semanal possui um intervalo por dia em `establishment_business_hours`. Dias fechados não geram slots. `BusinessHoursService` centraliza a grade de 30 minutos, ancorada na abertura, e valida se a duração cabe antes do fechamento. Pausas e exceções continuam em `TimeBlock`. O timezone operacional do MVP vem de `APP_TIME_ZONE`, com padrão `America/Sao_Paulo`; as decisões da agenda usam um `Clock` explícito e cada conexão PostgreSQL recebe o mesmo timezone de sessão.
+
 ## Catálogo profissional
 
 Profissionais e serviços se relacionam por `professional_services`. O lado público consulta apenas profissionais ativos, do mesmo estabelecimento e vinculados ao serviço escolhido. O painel permite editar os vínculos de cada profissional.
