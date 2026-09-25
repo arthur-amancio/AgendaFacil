@@ -11,6 +11,9 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Clock;
+import java.time.DayOfWeek;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,10 +24,12 @@ import br.com.agendafacilpro.domain.Appointment;
 import br.com.agendafacilpro.domain.AppointmentStatus;
 import br.com.agendafacilpro.domain.Customer;
 import br.com.agendafacilpro.domain.Establishment;
+import br.com.agendafacilpro.domain.EstablishmentBusinessHours;
 import br.com.agendafacilpro.domain.EstablishmentSettings;
 import br.com.agendafacilpro.domain.Professional;
 import br.com.agendafacilpro.domain.ServiceItem;
 import br.com.agendafacilpro.repo.AppointmentRepo;
+import br.com.agendafacilpro.repo.EstablishmentBusinessHoursRepo;
 import br.com.agendafacilpro.repo.CustomerRepo;
 import br.com.agendafacilpro.repo.ProfessionalRepo;
 import br.com.agendafacilpro.repo.ServiceItemRepo;
@@ -45,6 +50,8 @@ class AppointmentServiceSettingsTest {
             return new Decision(true, "ok", "17988887777");
         }
     };
+    private final EstablishmentBusinessHoursRepo hoursRepo = mock(EstablishmentBusinessHoursRepo.class);
+    private final BusinessHoursService businessHours = new BusinessHoursService(hoursRepo);
     private final AppointmentService service = new AppointmentService(
             appointments,
             customers,
@@ -54,7 +61,9 @@ class AppointmentServiceSettingsTest {
             guard,
             new AppointmentViewUtil(),
             new AppointmentAuditService(null),
-            settingsService
+            settingsService,
+            businessHours,
+            Clock.system(ZoneId.of("America/Sao_Paulo"))
     );
 
     private Establishment establishment;
@@ -68,6 +77,13 @@ class AppointmentServiceSettingsTest {
         professional = professional(establishment);
         professional.getServices().add(serviceItem);
         settingsService.settings = EstablishmentSettings.defaultsFor(establishment);
+        EstablishmentBusinessHours hours = new EstablishmentBusinessHours();
+        hours.setEstablishment(establishment);
+        hours.setDayOfWeek(DayOfWeek.MONDAY);
+        hours.setOpen(true);
+        hours.setOpeningTime(LocalTime.of(8, 0));
+        hours.setClosingTime(LocalTime.of(18, 0));
+        when(hoursRepo.findByEstablishmentIdAndDayOfWeek(eq(1L), any(DayOfWeek.class))).thenReturn(Optional.of(hours));
 
         when(appointments.findByEstablishmentIdAndStatusAndStartAtBefore(eq(1L), eq(AppointmentStatus.PENDING_APPROVAL), any(LocalDateTime.class))).thenReturn(List.of());
         when(appointments.findByEstablishmentIdAndStatusAndCreatedAtBefore(eq(1L), eq(AppointmentStatus.PENDING_APPROVAL), any(LocalDateTime.class))).thenReturn(List.of());
@@ -170,8 +186,9 @@ class AppointmentServiceSettingsTest {
     void approveDoesNotConfirmExpiredPending() {
         Appointment pending = new Appointment();
         pending.setStatus(AppointmentStatus.PENDING_APPROVAL);
-        pending.setStartAt(LocalDateTime.now().plusDays(1));
-        pending.setCreatedAt(LocalDateTime.now().minusHours(2));
+        LocalDateTime saoPauloNow = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+        pending.setStartAt(saoPauloNow.plusDays(1));
+        pending.setCreatedAt(saoPauloNow.minusHours(2));
         when(appointments.findByIdAndEstablishmentId(99L, 1L)).thenReturn(Optional.of(pending));
 
         assertThatThrownBy(() -> service.approve(99L, 1L))

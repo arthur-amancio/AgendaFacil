@@ -1,6 +1,7 @@
 package br.com.agendafacilpro.web;
 
 import java.time.LocalDate;
+import java.time.Clock;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +28,8 @@ import br.com.agendafacilpro.repo.ProfessionalRepo;
 import br.com.agendafacilpro.repo.ServiceItemRepo;
 import br.com.agendafacilpro.repo.TimeBlockRepo;
 import br.com.agendafacilpro.service.AppointmentService;
+import br.com.agendafacilpro.service.BusinessHoursForm;
+import br.com.agendafacilpro.service.BusinessHoursService;
 import br.com.agendafacilpro.service.CurrentUserService;
 import br.com.agendafacilpro.service.DashboardService;
 import br.com.agendafacilpro.service.EstablishmentSettingsForm;
@@ -36,6 +39,7 @@ import br.com.agendafacilpro.util.PhoneNormalizer;
 import br.com.agendafacilpro.web.form.ProfessionalForm;
 import br.com.agendafacilpro.web.form.ServiceForm;
 import br.com.agendafacilpro.web.form.TimeBlockForm;
+import br.com.agendafacilpro.web.form.WeeklyBusinessHoursForm;
 import jakarta.validation.Valid;
 
 @Controller
@@ -49,8 +53,10 @@ public class PanelController {
     private final TimeBlockRepo blocks;
     private final CustomerRepo customers;
     private final EstablishmentSettingsService settingsService;
+    private final BusinessHoursService businessHours;
+    private final Clock clock;
 
-    public PanelController(CurrentUserService c, DashboardService d, AppointmentService a, ServiceItemRepo s, ProfessionalRepo p, TimeBlockRepo b, CustomerRepo customers, EstablishmentSettingsService settingsService) {
+    public PanelController(CurrentUserService c, DashboardService d, AppointmentService a, ServiceItemRepo s, ProfessionalRepo p, TimeBlockRepo b, CustomerRepo customers, EstablishmentSettingsService settingsService, BusinessHoursService businessHours, Clock clock) {
         current = c;
         dashboard = d;
         appointments = a;
@@ -59,6 +65,8 @@ public class PanelController {
         blocks = b;
         this.customers = customers;
         this.settingsService = settingsService;
+        this.businessHours = businessHours;
+        this.clock = clock;
     }
 
     @GetMapping("/panel")
@@ -66,7 +74,7 @@ public class PanelController {
         AppUser u = shell(model, "dashboard", "Dashboard", "Resumo inteligente para acompanhar hoje, pendências e próximos horários.");
         Long est = u.getEstablishment().getId();
         model.addAttribute("dashboard", dashboard.data(est));
-        model.addAttribute("todayDate", LocalDate.now());
+        model.addAttribute("todayDate", LocalDate.now(clock));
         return "panel/dashboard";
     }
 
@@ -83,8 +91,8 @@ public class PanelController {
         model.addAttribute("professionals", professionals.findByEstablishmentIdOrderByActiveDescSortOrderAscNameAsc(est));
         model.addAttribute("statuses", AppointmentStatus.values());
         model.addAttribute("filter", filter);
-        model.addAttribute("todayDate", LocalDate.now());
-        model.addAttribute("next7Date", LocalDate.now().plusDays(6));
+        model.addAttribute("todayDate", LocalDate.now(clock));
+        model.addAttribute("next7Date", LocalDate.now(clock).plusDays(6));
         return "panel/agenda";
     }
 
@@ -104,8 +112,8 @@ public class PanelController {
         model.addAttribute("professionals", professionals.findByEstablishmentIdOrderByActiveDescSortOrderAscNameAsc(est));
         model.addAttribute("statuses", AppointmentStatus.values());
         model.addAttribute("filter", filter);
-        model.addAttribute("todayDate", LocalDate.now());
-        model.addAttribute("next7Date", LocalDate.now().plusDays(6));
+        model.addAttribute("todayDate", LocalDate.now(clock));
+        model.addAttribute("next7Date", LocalDate.now(clock).plusDays(6));
         model.addAttribute("customerLookupPhone", customerPhone);
         model.addAttribute("customerLookup", lookupCustomer(est, customerPhone));
         return "panel/appointments";
@@ -143,7 +151,7 @@ public class PanelController {
     String timeBlocks(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date, Model model) {
         AppUser u = shell(model, "blocks", "Bloqueios", "Reserve períodos em que a agenda online não deve aceitar horários.");
         Long est = u.getEstablishment().getId();
-        LocalDate selected = date == null ? LocalDate.now() : date;
+        LocalDate selected = date == null ? LocalDate.now(clock) : date;
         List<TimeBlock> timeBlocks = date == null
                 ? blocks.findTop20ByEstablishmentIdOrderByStartAtDesc(est)
                 : blocks.findByEstablishmentIdAndStartAtBetweenOrderByStartAtAsc(est, selected.atStartOfDay(), selected.plusDays(1).atStartOfDay());
@@ -157,6 +165,7 @@ public class PanelController {
     String settings(Model model) {
         AppUser u = shell(model, "settings", "Configurações", "Ajuste regras do agendamento online e da página pública.");
         model.addAttribute("settings", settingsService.forEstablishment(u.getEstablishment()));
+        model.addAttribute("businessHours", businessHours.weekly(u.getEstablishment().getId()));
         return "panel/settings";
     }
 
@@ -436,6 +445,21 @@ public class PanelController {
         }
     }
 
+    @PostMapping("/panel/settings/business-hours")
+    String businessHours(@ModelAttribute WeeklyBusinessHoursForm form, RedirectAttributes r) {
+        try {
+            AppUser user = current.user();
+            List<BusinessHoursForm> days = form.getHours().stream()
+                    .map(day -> new BusinessHoursForm(day.getDayOfWeek(), day.isOpen(), day.getOpeningTime(), day.getClosingTime()))
+                    .toList();
+            businessHours.update(user.getEstablishment(), days);
+            r.addFlashAttribute("success", "Horários de funcionamento salvos com sucesso.");
+            return "redirect:/panel/settings";
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            return panelError(r, ex.getMessage(), "/panel/settings");
+        }
+    }
+
     private AppUser shell(Model model, String activePage, String pageTitle, String pageSubtitle) {
         AppUser u = current.user();
         model.addAttribute("user", u);
@@ -447,7 +471,7 @@ public class PanelController {
     }
 
     private DashboardService.Filter filter(LocalDate startDate, LocalDate endDate, Long professionalId, AppointmentStatus status) {
-        LocalDate selectedStart = startDate == null ? LocalDate.now() : startDate;
+        LocalDate selectedStart = startDate == null ? LocalDate.now(clock) : startDate;
         return new DashboardService.Filter(selectedStart, endDate == null ? selectedStart : endDate, professionalId, status);
     }
 

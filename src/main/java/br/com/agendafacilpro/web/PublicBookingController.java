@@ -19,6 +19,7 @@ public class PublicBookingController {
     private final CatalogService catalog;
     private final AppointmentService appointments;
     private final EstablishmentSettingsService settings;
+    private final Clock clock;
 
     private static final List<FlowStep> FLOW_STEPS = List.of(
             new FlowStep(1, "Serviço"),
@@ -32,10 +33,11 @@ public class PublicBookingController {
     public record FlowStep(int number, String label) {
     }
 
-    public PublicBookingController(CatalogService c, AppointmentService a, EstablishmentSettingsService settings) {
+    public PublicBookingController(CatalogService c, AppointmentService a, EstablishmentSettingsService settings, Clock clock) {
         catalog = c;
         appointments = a;
         this.settings = settings;
+        this.clock = clock;
     }
 
     @GetMapping("/agenda/{slug}")
@@ -62,13 +64,14 @@ public class PublicBookingController {
     @GetMapping("/agenda/{slug}/servicos/{serviceId}/profissionais/{professionalId}/horarios")
     String slots(@PathVariable String slug, @PathVariable Long serviceId, @PathVariable Long professionalId, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date, Model model) {
         Establishment e = catalog.establishment(slug);
-        LocalDate selected = date == null ? LocalDate.now() : date;
+        LocalDate selected = date == null ? LocalDate.now(clock) : date;
         List<AppointmentService.Slot> slots = appointments.slots(e.getId(), serviceId, professionalId, selected);
         model.addAttribute("establishment", e);
         model.addAttribute("service", catalog.service(serviceId, e.getId()));
         model.addAttribute("professional", catalog.professionalForService(professionalId, serviceId, e.getId()));
         model.addAttribute("selectedDate", selected);
         model.addAttribute("slots", slots);
+        model.addAttribute("closedDay", slots.isEmpty());
         model.addAttribute("slotSuggestions", slotSuggestions(slots));
         model.addAttribute("settings", settings.forEstablishment(e));
         addFlow(model, 4);

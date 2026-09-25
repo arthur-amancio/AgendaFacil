@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Clock;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +21,7 @@ import br.com.agendafacilpro.domain.AppointmentStatus;
 import br.com.agendafacilpro.domain.Customer;
 import br.com.agendafacilpro.domain.Establishment;
 import br.com.agendafacilpro.domain.EstablishmentSettings;
+import br.com.agendafacilpro.domain.EstablishmentBusinessHours;
 import br.com.agendafacilpro.domain.Professional;
 import br.com.agendafacilpro.domain.ServiceItem;
 import br.com.agendafacilpro.repo.AppointmentRepo;
@@ -42,6 +45,7 @@ class AppointmentServiceNoShowTest {
             return new Decision(true, "ok", "17988887777");
         }
     };
+    private final BusinessHoursService businessHours = mock(BusinessHoursService.class);
     private final AppointmentService service = new AppointmentService(
             appointments,
             customers,
@@ -51,7 +55,9 @@ class AppointmentServiceNoShowTest {
             guard,
             new AppointmentViewUtil(),
             new AppointmentAuditService(null),
-            settings
+            settings,
+            businessHours,
+            Clock.system(ZoneId.of("America/Sao_Paulo"))
     );
 
     @Test
@@ -77,6 +83,10 @@ class AppointmentServiceNoShowTest {
         Professional professional = professional(establishment);
         professional.getServices().add(serviceItem);
         Customer customer = customer(establishment, 2, false);
+        EstablishmentBusinessHours dailyHours = mock(EstablishmentBusinessHours.class);
+        when(dailyHours.isOpen()).thenReturn(true);
+        when(businessHours.hours(eq(1L), any(LocalDate.class))).thenReturn(Optional.of(dailyHours));
+        when(businessHours.fits(eq(dailyHours), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(true);
 
         when(appointments.findByEstablishmentIdAndStatusAndStartAtBefore(eq(1L), eq(AppointmentStatus.PENDING_APPROVAL), any(LocalDateTime.class)))
                 .thenReturn(List.of());

@@ -25,4 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  document.querySelectorAll('[data-business-hours-row]').forEach(row => {
+    const open = row.querySelector('[data-business-hours-open]');
+    const times = row.querySelectorAll('[data-business-hours-time]');
+    const sync = () => times.forEach(input => { input.required = open.checked; });
+    open?.addEventListener('change', sync);
+    sync();
+  });
 });

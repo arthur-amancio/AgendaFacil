@@ -16,7 +16,7 @@ import br.com.agendafacilpro.repo.AppointmentRepo;
 class EstablishmentIsolationTest {
 
     private final AppointmentRepo appointments = mock(AppointmentRepo.class);
-    private final AppointmentService service = new AppointmentService(appointments, null, null, null, null, null, null, null, null);
+    private final AppointmentService service = new AppointmentService(appointments, null, null, null, null, null, null, null, null, null, null);
 
     @Test
     void establishmentBCannotApproveAppointmentFromA() {

@@ -5,6 +5,8 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/agendafacil_pro}
     username: ${DB_USERNAME:agendafacil}
     password: ${DB_PASSWORD:}
+    hikari:
+      connection-init-sql: SET TIME ZONE '${APP_TIME_ZONE:America/Sao_Paulo}'
   jpa:
     hibernate:
       ddl-auto: validate
@@ -13,6 +15,8 @@ spring:
     enabled: true
   thymeleaf:
     cache: false
+app:
+  time-zone: ${APP_TIME_ZONE:America/Sao_Paulo}
 server:
   servlet:
     session:

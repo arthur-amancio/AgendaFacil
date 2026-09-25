@@ -115,6 +115,29 @@
         <button class="btn primary" type="submit">Salvar configurações</button>
       </div>
     </form>
+
+    <form class="admin-form settings-form" th:action="@{/panel/settings/business-hours}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <section class="settings-card">
+        <span class="eyebrow">Agenda semanal</span>
+        <h2>Horários de funcionamento</h2>
+        <p class="muted-text">Pausas, almoço, feriados e ausências continuam sendo configurados em Bloqueios.</p>
+        <div th:each="day, stat : ${businessHours}" class="business-hours-row" data-business-hours-row>
+          <input type="hidden" th:name="|hours[${stat.index}].dayOfWeek|" th:value="${day.dayOfWeek}">
+          <label class="check-line">
+            <input type="checkbox" th:name="|hours[${stat.index}].open|" value="true" th:checked="${day.open}" data-business-hours-open>
+            <span th:text="${day.dayLabel}">Segunda-feira</span>
+          </label>
+          <label>Abertura
+            <input type="time" th:name="|hours[${stat.index}].openingTime|" th:value="${day.openingTime}" step="60" th:required="${day.open}" data-business-hours-time>
+          </label>
+          <label>Fechamento
+            <input type="time" th:name="|hours[${stat.index}].closingTime|" th:value="${day.closingTime}" step="60" th:required="${day.open}" data-business-hours-time>
+          </label>
+        </div>
+        <button class="btn primary" type="submit">Salvar horários</button>
+      </section>
+    </form>
   </main>
 </body>
 </html>

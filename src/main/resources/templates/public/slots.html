@@ -57,6 +57,8 @@
         </ul>
       </div>
 
+      <p class="empty-state" th:if="${closedDay}">O estabelecimento não atende neste dia.</p>
+
       <div class="slots">
         <div th:each="slot : ${slots}">
           <a class="slot" th:if="${slot.available}" th:href="@{/agenda/{slug}/servicos/{serviceId}/profissionais/{professionalId}/dados(slug=${establishment.slug},serviceId=${service.id},professionalId=${professional.id},date=${selectedDate},time=${slot.start})}" th:aria-label="|Escolher horário ${#temporals.format(slot.start, 'HH:mm')}|">
