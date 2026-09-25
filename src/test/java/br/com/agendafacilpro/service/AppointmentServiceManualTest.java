@@ -10,6 +10,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import br.com.agendafacilpro.domain.AppUser;
 import br.com.agendafacilpro.domain.Appointment;
@@ -78,7 +80,7 @@ class AppointmentServiceManualTest {
         when(blocks.existsOverlap(eq(1L), eq(3L), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(false);
         when(appointments.existsBlockingOverlap(eq(1L), eq(3L), any(LocalDateTime.class), any(LocalDateTime.class), any(), any())).thenReturn(false);
         when(customers.save(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(appointments.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(appointments.saveAndFlush(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
@@ -116,7 +118,21 @@ class AppointmentServiceManualTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("não está disponível para este serviço");
 
-        verify(appointments, never()).save(any(Appointment.class));
+        verify(appointments, never()).saveAndFlush(any(Appointment.class));
+    }
+
+    @Test
+    void databaseOverlapIsTranslatedToHumanMessage() {
+        when(customers.findByEstablishmentIdAndPhoneNormalized(1L, "17988887777")).thenReturn(Optional.empty());
+        when(appointments.saveAndFlush(any(Appointment.class))).thenThrow(new DataIntegrityViolationException(
+                "constraint violation",
+                new SQLException("conflicting key", "23P01")
+        ));
+
+        assertThatThrownBy(() -> service.createManual(establishment, user, request("Ana Cliente", "(17) 98888-7777")))
+                .isInstanceOf(BookingConflictException.class)
+                .hasMessage(BookingConflictException.MESSAGE)
+                .hasRootCauseInstanceOf(SQLException.class);
     }
 
     @Test

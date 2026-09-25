@@ -18,6 +18,7 @@ import br.com.agendafacilpro.domain.EstablishmentSettings;
 import br.com.agendafacilpro.domain.Professional;
 import br.com.agendafacilpro.domain.ServiceItem;
 import br.com.agendafacilpro.service.AppointmentService;
+import br.com.agendafacilpro.service.BookingConflictException;
 import br.com.agendafacilpro.service.CatalogService;
 import br.com.agendafacilpro.service.EstablishmentSettingsService;
 import br.com.agendafacilpro.web.form.PublicBookingForm;
@@ -59,6 +60,24 @@ class PublicBookingControllerFlowTest {
 
         assertThat(view).isEqualTo("redirect:/agenda/agenda-demo/sucesso/public-token-123456789012");
         assertThat(appointments.created).isEqualTo(1);
+    }
+
+    @Test
+    void concurrentDatabaseConflictReturnsHumanMessageToPublicFlow() {
+        appointments.conflictOnCreate = true;
+        PublicBookingForm form = bookingForm();
+        ExtendedModelMap model = new ExtendedModelMap();
+
+        String view = controller.confirm(
+                "agenda-demo",
+                form,
+                new BeanPropertyBindingResult(form, "bookingForm"),
+                new MockHttpServletRequest(),
+                model
+        );
+
+        assertThat(view).isEqualTo("public/data");
+        assertThat(model.get("error")).isEqualTo(BookingConflictException.MESSAGE);
     }
 
     @Test
@@ -160,6 +179,7 @@ class PublicBookingControllerFlowTest {
     private static class FakeAppointmentService extends AppointmentService {
         private int validated;
         private int created;
+        private boolean conflictOnCreate;
 
         FakeAppointmentService() {
             super(null, null, null, null, null, null, null, null, null);
@@ -172,6 +192,9 @@ class PublicBookingControllerFlowTest {
 
         @Override
         public Appointment create(Establishment est, Long serviceId, Long professionalId, LocalDate date, LocalTime time, String name, String phone, String ip, String honeypot) {
+            if (conflictOnCreate) {
+                throw new BookingConflictException(new IllegalStateException("simulated database conflict"));
+            }
             created++;
             Appointment appointment = new Appointment();
             appointment.setPublicToken("public-token-123456789012");

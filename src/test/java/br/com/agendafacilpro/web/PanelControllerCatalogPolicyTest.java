@@ -7,10 +7,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
 import br.com.agendafacilpro.domain.AppUser;
@@ -22,9 +25,11 @@ import br.com.agendafacilpro.repo.ProfessionalRepo;
 import br.com.agendafacilpro.repo.ServiceItemRepo;
 import br.com.agendafacilpro.repo.TimeBlockRepo;
 import br.com.agendafacilpro.service.AppointmentService;
+import br.com.agendafacilpro.service.BookingConflictException;
 import br.com.agendafacilpro.service.CurrentUserService;
 import br.com.agendafacilpro.service.DashboardService;
 import br.com.agendafacilpro.service.EstablishmentSettingsService;
+import br.com.agendafacilpro.service.ManualAppointmentRequest;
 
 class PanelControllerCatalogPolicyTest {
 
@@ -128,6 +133,31 @@ class PanelControllerCatalogPolicyTest {
         assertThat(redirect.getFlashAttributes()).containsKey("error");
     }
 
+    @Test
+    void concurrentDatabaseConflictReturnsHumanMessageToPanel() {
+        appointments.conflictOnCreate = true;
+        ManualAppointmentRequest request = new ManualAppointmentRequest(
+                "Ana Cliente",
+                "(17) 98888-7777",
+                2L,
+                3L,
+                LocalDate.now().plusDays(1),
+                LocalTime.of(9, 0),
+                null,
+                false
+        );
+        RedirectAttributesModelMap redirect = new RedirectAttributesModelMap();
+
+        String route = controller.manual(
+                request,
+                new BeanPropertyBindingResult(request, "manualAppointmentRequest"),
+                redirect
+        );
+
+        assertThat(route).isEqualTo("redirect:/panel/appointments");
+        assertThat(redirect.getFlashAttributes().get("error")).isEqualTo(BookingConflictException.MESSAGE);
+    }
+
     private ServiceItem service() {
         ServiceItem service = new ServiceItem();
         service.setId(2L);
@@ -168,6 +198,7 @@ class PanelControllerCatalogPolicyTest {
     private static class FakeAppointmentService extends AppointmentService {
         private long serviceCount;
         private long professionalCount;
+        private boolean conflictOnCreate;
 
         FakeAppointmentService() {
             super(null, null, null, null, null, null, null, null, null);
@@ -181,6 +212,18 @@ class PanelControllerCatalogPolicyTest {
         @Override
         public long countAppointmentsForProfessional(Long establishmentId, Long professionalId) {
             return professionalCount;
+        }
+
+        @Override
+        public br.com.agendafacilpro.domain.Appointment createManual(
+                Establishment establishment,
+                AppUser user,
+                ManualAppointmentRequest request
+        ) {
+            if (conflictOnCreate) {
+                throw new BookingConflictException(new IllegalStateException("simulated database conflict"));
+            }
+            return new br.com.agendafacilpro.domain.Appointment();
         }
     }
 }

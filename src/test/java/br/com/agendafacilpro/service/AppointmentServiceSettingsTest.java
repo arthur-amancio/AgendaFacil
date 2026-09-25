@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -76,7 +77,7 @@ class AppointmentServiceSettingsTest {
         when(appointments.existsBlockingOverlap(eq(1L), eq(3L), any(LocalDateTime.class), any(LocalDateTime.class), any(), any())).thenReturn(false);
         when(appointments.countFutureByPhone(eq(1L), eq("17988887777"), any(), any(LocalDateTime.class))).thenReturn(0L);
         when(customers.save(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(appointments.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(appointments.saveAndFlush(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
@@ -162,6 +163,7 @@ class AppointmentServiceSettingsTest {
         service.expire(1L, settingsService.settings);
 
         assertThat(pending.getStatus()).isEqualTo(AppointmentStatus.EXPIRED);
+        verify(appointments).flush();
     }
 
     @Test
