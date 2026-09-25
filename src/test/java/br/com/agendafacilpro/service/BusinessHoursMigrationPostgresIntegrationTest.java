@@ -28,7 +28,7 @@ class BusinessHoursMigrationPostgresIntegrationTest {
             Flyway base = flyway(schema, MigrationVersion.fromVersion("8"));
             base.migrate();
             JdbcTemplate jdbc = jdbc();
-            jdbc.update("INSERT INTO " + schema + ".establishments(name,slug,whatsapp,active) VALUES ('Piloto','piloto','5517999999999',true)");
+            jdbc.update("INSERT INTO " + schema + ".establishments(id,name,slug,whatsapp,active) VALUES (9001,'Piloto','piloto','5517999999999',true)");
 
             flyway(schema, null).migrate();
 

@@ -186,8 +186,9 @@ class AppointmentServiceSettingsTest {
     void approveDoesNotConfirmExpiredPending() {
         Appointment pending = new Appointment();
         pending.setStatus(AppointmentStatus.PENDING_APPROVAL);
-        pending.setStartAt(LocalDateTime.now().plusDays(1));
-        pending.setCreatedAt(LocalDateTime.now().minusHours(2));
+        LocalDateTime saoPauloNow = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+        pending.setStartAt(saoPauloNow.plusDays(1));
+        pending.setCreatedAt(saoPauloNow.minusHours(2));
         when(appointments.findByIdAndEstablishmentId(99L, 1L)).thenReturn(Optional.of(pending));
 
         assertThatThrownBy(() -> service.approve(99L, 1L))
