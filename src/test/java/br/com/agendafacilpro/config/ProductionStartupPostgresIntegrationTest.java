@@ -45,8 +45,15 @@ class ProductionStartupPostgresIntegrationTest {
         assertThat(environment.getActiveProfiles()).containsExactly("prod");
         assertThat(environment.getProperty("server.servlet.session.cookie.secure", Boolean.class)).isTrue();
         assertThat(environment.getProperty("server.address")).isEqualTo("127.0.0.1");
+        assertThat(environment.getProperty("server.shutdown")).isEqualTo("graceful");
         assertThat(environment.getProperty("server.forward-headers-strategy")).isEqualTo("native");
         assertThat(environment.getProperty("server.tomcat.remoteip.internal-proxies")).isEqualTo("127.0.0.1/32");
+        assertThat(environment.getProperty("management.server.address")).isEqualTo("127.0.0.1");
+        assertThat(environment.getProperty("management.server.port", Integer.class)).isEqualTo(8081);
+        assertThat(environment.getProperty("management.endpoints.web.exposure.include")).isEqualTo("health");
+        assertThat(environment.getProperty("management.endpoint.health.show-details")).isEqualTo("never");
+        assertThat(environment.getProperty("management.endpoint.health.show-components")).isEqualTo("never");
+        assertThat(environment.getProperty("spring.lifecycle.timeout-per-shutdown-phase")).isEqualTo("20s");
         assertThat(environment.getProperty("spring.thymeleaf.cache", Boolean.class)).isTrue();
         assertThat(environment.getProperty("app.provisioning.enabled", Boolean.class)).isFalse();
         assertThat(zoneId).isEqualTo(ZoneId.of("America/Sao_Paulo"));
