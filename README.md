@@ -89,6 +89,14 @@ fornecidos explicitamente antes de iniciar com `SPRING_PROFILES_ACTIVE=prod`.
 Valores ausentes, vazios ou timezone invalido recusam o startup. Os profiles
 `prod,dev`, `prod,demo` e provisioning sem `prod` tambem sao recusados.
 
+Em producao, a aplicacao escuta somente em `127.0.0.1` e deve receber trafego
+exclusivamente de um proxy reverso local. Esse proxy deve remover quaisquer
+headers `X-Forwarded-*` enviados pelo cliente e escrever seus proprios
+`X-Forwarded-For`, `X-Forwarded-Proto` e, quando aplicavel,
+`X-Forwarded-Host`. O unico proxy confiavel pela aplicacao e
+`127.0.0.1/32`; conexoes de outras origens nao podem controlar o IP remoto nem
+marcar uma requisicao HTTP como HTTPS.
+
 O arquivo .env é ignorado pelo Git. Não publique senhas reais no código, nas migrations ou na documentação.
 
 ## Autor
