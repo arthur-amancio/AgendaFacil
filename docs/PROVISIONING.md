@@ -23,6 +23,8 @@ HAVING count(*) > 1;
 
 Se houver resultado, interrompa o deploy e reconcilie os usuários manualmente. A migration não escolhe, exclui ou altera e-mails.
 
+A V10 também alinha a sequence de `establishments` ao maior ID existente. Isso corrige de forma aditiva o histórico da V1, que inseriu o tenant demo com ID explícito, sem alterar qualquer estabelecimento.
+
 ## Pré-requisitos operacionais
 
 - usar o mesmo artefato aprovado que executa a aplicação;

@@ -34,6 +34,11 @@ class UserEmailMigrationPostgresIntegrationTest {
                     """, Integer.class, schema);
             assertThat(indexCount).isEqualTo(1);
 
+            Long nextEstablishmentId = jdbc.queryForObject(
+                    "INSERT INTO " + schema + ".establishments(name,slug,whatsapp,active) VALUES ('Sequence','sequence-v10','5517999999999',false) RETURNING id",
+                    Long.class);
+            assertThat(nextEstablishmentId).isGreaterThan(1L);
+
             jdbc.update("INSERT INTO " + schema + ".establishments(id,name,slug,whatsapp,active) VALUES (9101,'Piloto','email-index-piloto','5517999999999',false)");
             jdbc.update("INSERT INTO " + schema + ".users_app(establishment_id,name,email,password_hash,role,enabled) VALUES (9101,'Owner','Owner@Example.test','hash','OWNER',true)");
             assertThatThrownBy(() -> jdbc.update("INSERT INTO " + schema + ".users_app(establishment_id,name,email,password_hash,role,enabled) VALUES (9101,'Outro','owner@example.test','hash','OWNER',true)"))
