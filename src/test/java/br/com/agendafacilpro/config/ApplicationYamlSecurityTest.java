@@ -20,5 +20,7 @@ class ApplicationYamlSecurityTest {
         assertThat(yaml).contains("same-site: strict");
         assertThat(yaml).contains("on-profile: prod");
         assertThat(yaml).contains("secure: true");
+        assertThat(yaml).contains("provisioning:");
+        assertThat(yaml).contains("enabled: false");
     }
 }

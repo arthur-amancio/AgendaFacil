@@ -16,6 +16,8 @@ Não desabilitar CSRF para resolver erro de formulário; corrigir o formulário 
 
 Senhas administrativas são armazenadas como hash BCrypt. O `PasswordEncoder` configurado é `BCryptPasswordEncoder`.
 
+O provisionamento gera a credencial inicial com `SecureRandom` e nunca a recebe por argumento ou variável de ambiente. A credencial só é disponibilizada depois do commit, uma única vez, por console interativo ou arquivo novo com permissão `0600`. Consulte `docs/PROVISIONING.md`.
+
 ## Senhas e variáveis de ambiente
 
 Não salvar senha real no código, em documentação ou em migrations novas. Use variáveis de ambiente para configuração sensível:
@@ -41,6 +43,8 @@ servicos 1 a 4 e profissionais 1 a 3. A V5 historica usa atualizacoes por ID e
 `ON CONFLICT (id) DO UPDATE`; se algum desses IDs ja contiver dado real,
 interrompa o deploy, faca backup e resolva a colisao antes de executar as
 migrations.
+
+A V10 adiciona unicidade case-insensitive em `users_app(lower(email))`, alinhada ao login por e-mail sem distinção de caixa. Antes do deploy, execute o preflight documentado em `docs/PROVISIONING.md`; duplicidades existentes fazem a migration falhar sem alterar usuários.
 
 ## Proteção contra acesso cruzado
 

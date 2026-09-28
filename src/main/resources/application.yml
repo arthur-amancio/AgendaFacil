@@ -17,6 +17,8 @@ spring:
     cache: false
 app:
   time-zone: ${APP_TIME_ZONE:America/Sao_Paulo}
+  provisioning:
+    enabled: false
 server:
   servlet:
     session:

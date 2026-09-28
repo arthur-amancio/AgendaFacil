@@ -42,4 +42,16 @@ public interface ProfessionalRepo extends JpaRepository<Professional, Long> {
       and s.active=true
   """)
     boolean existsActiveQualified(@Param("establishmentId") Long establishmentId, @Param("professionalId") Long professionalId, @Param("serviceId") Long serviceId);
+
+    boolean existsByEstablishmentIdAndActiveTrue(Long establishmentId);
+
+    @Query("""
+    select count(p)>0 from Professional p
+    join p.services s
+    where p.establishment.id=:establishmentId
+      and s.establishment.id=:establishmentId
+      and p.active=true
+      and s.active=true
+  """)
+    boolean existsAnyActiveQualified(@Param("establishmentId") Long establishmentId);
 }

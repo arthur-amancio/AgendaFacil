@@ -130,6 +130,10 @@ Ambos os lados usam as mesmas regras centrais de disponibilidade e conflito em `
 
 O expediente semanal possui um intervalo por dia em `establishment_business_hours`. Dias fechados não geram slots. `BusinessHoursService` centraliza a grade de 30 minutos, ancorada na abertura, e valida se a duração cabe antes do fechamento. Pausas e exceções continuam em `TimeBlock`. O timezone operacional do MVP vem de `APP_TIME_ZONE`, com padrão `America/Sao_Paulo`; as decisões da agenda usam um `Clock` explícito, a JVM é alinhada ao mesmo fuso para manter chamadas legadas coerentes e cada conexão PostgreSQL recebe esse timezone de sessão.
 
+## Provisionamento operacional
+
+Os primeiros tenants são criados por um comando one-shot non-web, protegido por profile, flag de habilitação e comando explícito. A criação transacional persiste estabelecimento inativo, settings, sete dias fechados e OWNER com BCrypt. Uma ação separada ativa somente tenants que passam pelo preflight de horários, OWNER e catálogo. O procedimento operacional está em `docs/PROVISIONING.md`.
+
 ## Catálogo profissional
 
 Profissionais e serviços se relacionam por `professional_services`. O lado público consulta apenas profissionais ativos, do mesmo estabelecimento e vinculados ao serviço escolhido. O painel permite editar os vínculos de cada profissional.

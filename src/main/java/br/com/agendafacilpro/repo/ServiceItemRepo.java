@@ -14,4 +14,6 @@ public interface ServiceItemRepo extends JpaRepository<ServiceItem, Long> {
     List<ServiceItem> findByEstablishmentIdOrderByActiveDescSortOrderAscNameAsc(Long establishmentId);
 
     Optional<ServiceItem> findByIdAndEstablishmentId(Long id, Long establishmentId);
+
+    boolean existsByEstablishmentIdAndActiveTrue(Long establishmentId);
 }
