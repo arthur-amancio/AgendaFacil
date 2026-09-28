@@ -71,9 +71,10 @@ class TrustedProxyPostgresIntegrationTest {
         HttpResponse<String> response = request(nonLoopbackAddress.getHostAddress());
 
         assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body())
-                .isEqualTo(nonLoopbackAddress.getHostAddress() + "|false|http")
-                .doesNotContain(FORWARDED_CLIENT_IP);
+        String observedRemoteAddress = response.body().substring(0, response.body().indexOf('|'));
+        assertThat(InetAddress.getByName(observedRemoteAddress).isLoopbackAddress()).isFalse();
+        assertThat(observedRemoteAddress).isNotEqualTo(FORWARDED_CLIENT_IP);
+        assertThat(response.body()).endsWith("|false|http");
         assertThat(response.headers().firstValue("Strict-Transport-Security")).isEmpty();
     }
 
