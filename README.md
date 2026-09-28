@@ -24,7 +24,7 @@ Sistema web de agendamento para pequenos estabelecimentos e profissionais de ser
 ## Stack
 
 - Java 17
-- Spring Boot 3.3
+- Spring Boot 4.1.1
 - Spring MVC e Thymeleaf
 - Spring Security
 - Spring Data JPA
