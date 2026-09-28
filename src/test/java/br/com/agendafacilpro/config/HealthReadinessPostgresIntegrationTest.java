@@ -75,7 +75,11 @@ class HealthReadinessPostgresIntegrationTest {
         HttpResponse<String> liveness = managementGet("/actuator/health/liveness");
         HttpResponse<String> readiness = managementGet("/actuator/health/readiness");
 
-        assertMinimalHealth(overall, 200, "UP");
+        assertThat(overall.statusCode()).isEqualTo(200);
+        assertThat(overall.body())
+                .contains("\"status\":\"UP\"")
+                .contains("\"groups\":[\"liveness\",\"readiness\"]");
+        assertNoSensitiveDetails(overall.body());
         assertMinimalHealth(liveness, 200, "UP");
         assertMinimalHealth(readiness, 200, "UP");
         assertThat(liveness.headers().firstValue("Location")).isEmpty();
