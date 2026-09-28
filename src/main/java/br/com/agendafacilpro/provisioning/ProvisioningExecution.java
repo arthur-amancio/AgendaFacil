@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("provisioning")
+@Profile("prod & provisioning")
 public class ProvisioningExecution {
     private int exitCode = 2;
     private String message = "O comando de provisioning não foi executado.";

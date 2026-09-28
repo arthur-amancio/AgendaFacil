@@ -25,6 +25,11 @@ Não salvar senha real no código, em documentação ou em migrations novas. Use
 - `DB_URL`
 - `DB_USERNAME`
 - `DB_PASSWORD`
+- `APP_TIME_ZONE`
+
+Em producao, todas essas variaveis sao obrigatorias, nao possuem fallback e sao
+validadas antes da inicializacao do banco. Mensagens de falha identificam apenas
+o nome da configuracao ausente, sem registrar o valor de secrets.
 
 As migrations historicas V1 e V5 contem dados locais de demonstracao e nao devem
 ser reescritas, pois podem ter sido aplicadas em bancos existentes. A V7 desativa
@@ -117,7 +122,7 @@ A CSP permite `style-src 'self' 'unsafe-inline'` porque o fluxo Thymeleaf atual 
 
 O cookie de sessao chama `AGENDAFACIL_SESSION`, usa `httpOnly=true`, `sameSite=strict` e timeout de 30 minutos.
 
-O profile padrao `dev` usa `secure=false` para funcionar em HTTP local. Em producao, use `SPRING_PROFILES_ACTIVE=prod` e HTTPS; nesse profile o cookie fica `secure=true`.
+O profile `dev`, ativado explicitamente, usa `secure=false` para funcionar em HTTP local. Sem profile o sistema nao seleciona configuracao de desenvolvimento. Em producao, use `SPRING_PROFILES_ACTIVE=prod` e HTTPS; nesse profile o cookie fica `secure=true`.
 
 ## Protecao contra forca bruta no login
 

@@ -10,12 +10,14 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 
 @Component
-@Profile("provisioning")
+@Profile("prod & provisioning")
 public class ProvisioningCommandRunner implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(ProvisioningCommandRunner.class);
 
@@ -25,6 +27,7 @@ public class ProvisioningCommandRunner implements ApplicationRunner {
     private final CredentialPublisher credentialPublisher;
     private final ProvisioningExecution execution;
     private final ApplicationContext applicationContext;
+    private final Environment environment;
     private final Clock clock;
 
     public ProvisioningCommandRunner(
@@ -34,6 +37,7 @@ public class ProvisioningCommandRunner implements ApplicationRunner {
             CredentialPublisher credentialPublisher,
             ProvisioningExecution execution,
             ApplicationContext applicationContext,
+            Environment environment,
             Clock clock) {
         this.properties = properties;
         this.service = service;
@@ -41,11 +45,16 @@ public class ProvisioningCommandRunner implements ApplicationRunner {
         this.credentialPublisher = credentialPublisher;
         this.execution = execution;
         this.applicationContext = applicationContext;
+        this.environment = environment;
         this.clock = clock;
     }
 
     @Override
     public void run(ApplicationArguments args) {
+        if (!environment.acceptsProfiles(Profiles.of("prod & provisioning"))) {
+            execution.failure("Provisioning recusado: os profiles prod e provisioning são obrigatórios.");
+            return;
+        }
         if (!properties.isEnabled()) {
             execution.failure("Provisioning desabilitado. Ative explicitamente app.provisioning.enabled=true.");
             return;

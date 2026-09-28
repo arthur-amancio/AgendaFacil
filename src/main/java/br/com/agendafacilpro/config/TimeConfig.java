@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class TimeConfig {
     @Bean
-    ZoneId applicationZoneId(@Value("${app.time-zone:America/Sao_Paulo}") String timeZone) {
+    ZoneId applicationZoneId(@Value("${app.time-zone}") String timeZone) {
         ZoneId zoneId = ZoneId.of(timeZone);
         TimeZone.setDefault(TimeZone.getTimeZone(zoneId));
         return zoneId;

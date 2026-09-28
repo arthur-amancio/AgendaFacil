@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile("provisioning")
+@Profile("prod & provisioning")
 @EnableConfigurationProperties(ProvisioningProperties.class)
 public class ProvisioningConfiguration {
 }

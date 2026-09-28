@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.context.ApplicationContext;
+import org.springframework.mock.env.MockEnvironment;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -47,6 +48,30 @@ class ProvisioningCommandRunnerTest {
 
         assertThat(harness.execution.exitCode()).isEqualTo(2);
         assertThat(harness.execution.message()).contains("desabilitado");
+        verify(harness.service, never()).create(any(), any());
+    }
+
+    @Test
+    void provisioningWithoutProductionProfileNeverReachesTheService() throws Exception {
+        Harness harness = harness("provisioning");
+        configureCreate(harness);
+
+        harness.runner.run(new DefaultApplicationArguments(new String[0]));
+
+        assertThat(harness.execution.exitCode()).isEqualTo(2);
+        assertThat(harness.execution.message()).contains("prod e provisioning");
+        verify(harness.service, never()).create(any(), any());
+    }
+
+    @Test
+    void developmentProvisioningNeverReachesTheService() throws Exception {
+        Harness harness = harness("dev,provisioning");
+        configureCreate(harness);
+
+        harness.runner.run(new DefaultApplicationArguments(new String[0]));
+
+        assertThat(harness.execution.exitCode()).isEqualTo(2);
+        assertThat(harness.execution.message()).contains("prod e provisioning");
         verify(harness.service, never()).create(any(), any());
     }
 
@@ -122,6 +147,10 @@ class ProvisioningCommandRunnerTest {
     }
 
     private Harness harness() {
+        return harness("prod,provisioning");
+    }
+
+    private Harness harness(String activeProfiles) {
         ProvisioningProperties properties = new ProvisioningProperties();
         TenantProvisioningService service = mock(TenantProvisioningService.class);
         InitialCredentialGenerator generator = mock(InitialCredentialGenerator.class);
@@ -130,9 +159,10 @@ class ProvisioningCommandRunnerTest {
         when(publisher.prepare(any())).thenReturn(channel);
         ProvisioningExecution execution = new ProvisioningExecution();
         ApplicationContext context = mock(ApplicationContext.class);
+        MockEnvironment environment = new MockEnvironment().withProperty("spring.profiles.active", activeProfiles);
         Clock clock = Clock.fixed(Instant.parse("2030-01-01T12:00:00Z"), ZoneOffset.UTC);
         ProvisioningCommandRunner runner = new ProvisioningCommandRunner(
-                properties, service, generator, publisher, execution, context, clock);
+                properties, service, generator, publisher, execution, context, environment, clock);
         return new Harness(properties, service, generator, channel, execution, runner);
     }
 
