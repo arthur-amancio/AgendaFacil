@@ -54,7 +54,7 @@
 
 ## Testes automatizados mínimos
 
-- [ ] `mvn clean test` passa em Java 17.
+- [ ] `mvn clean verify` passa em Java 17.
 - [ ] PhoneNormalizer cobre máscara, sem máscara e inválido.
 - [ ] Status bloqueantes e liberadores cobertos.
 - [ ] Regra de conflito cobre igualdade, sobreposição e fronteiras sem conflito.
