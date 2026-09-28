@@ -24,6 +24,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -33,6 +34,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import br.com.agendafacilpro.domain.AppointmentStatus;
 
 @SpringBootTest
+@ActiveProfiles("dev")
 @Testcontainers
 class AppointmentOverlapPostgresIntegrationTest {
 

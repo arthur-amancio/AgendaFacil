@@ -16,4 +16,10 @@ class AgendaFacilProApplicationTest {
         assertThat(AgendaFacilProApplication.provisioningRequested(
                 new String[] {"--spring.profiles.active=prod"})).isFalse();
     }
+
+    @Test
+    void invalidProvisioningProfileStillSelectsNonWebModeBeforeStartupIsRejected() {
+        assertThat(AgendaFacilProApplication.provisioningRequested(
+                new String[] {"--spring.profiles.active=dev,provisioning"})).isTrue();
+    }
 }

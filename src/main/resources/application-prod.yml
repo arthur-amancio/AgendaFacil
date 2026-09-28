@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: ${DB_URL:}
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
+    hikari:
+      connection-init-sql: SET TIME ZONE '${APP_TIME_ZONE:}'
+  thymeleaf:
+    cache: true
+
+app:
+  time-zone: ${APP_TIME_ZONE:}
+  provisioning:
+    enabled: false
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true

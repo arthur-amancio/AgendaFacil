@@ -1,12 +1,4 @@
 spring:
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/agendafacil_pro}
-    username: ${DB_USERNAME:agendafacil}
-    password: ${DB_PASSWORD:}
-    hikari:
-      connection-init-sql: SET TIME ZONE '${APP_TIME_ZONE:America/Sao_Paulo}'
   jpa:
     hibernate:
       ddl-auto: validate
@@ -14,11 +6,12 @@ spring:
   flyway:
     enabled: true
   thymeleaf:
-    cache: false
+    cache: true
+
 app:
-  time-zone: ${APP_TIME_ZONE:America/Sao_Paulo}
   provisioning:
     enabled: false
+
 server:
   servlet:
     session:
@@ -26,7 +19,7 @@ server:
       cookie:
         name: AGENDAFACIL_SESSION
         http-only: true
-        secure: false
+        secure: true
         same-site: strict
   error:
     whitelabel:
@@ -34,13 +27,3 @@ server:
     include-message: never
     include-stacktrace: never
     include-binding-errors: never
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-server:
-  servlet:
-    session:
-      cookie:
-        secure: true

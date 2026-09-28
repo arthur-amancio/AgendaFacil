@@ -1,7 +1,7 @@
 # AgendaFácil Pro
 
 ![Java 17](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-6DB33F?logo=springboot&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1.1-6DB33F?logo=springboot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
 
@@ -52,7 +52,7 @@ Linux/macOS:
 
 ~~~bash
 export DB_PASSWORD="<mesmo valor definido no .env>"
-export SPRING_PROFILES_ACTIVE="dev,demo"
+export SPRING_PROFILES_ACTIVE="dev"
 mvn spring-boot:run
 ~~~
 
@@ -60,17 +60,18 @@ PowerShell:
 
 ~~~powershell
 $env:DB_PASSWORD="<mesmo valor definido no .env>"
-$env:SPRING_PROFILES_ACTIVE="dev,demo"
+$env:SPRING_PROFILES_ACTIVE="dev"
 mvn spring-boot:run
 ~~~
 
-Os profiles `dev,demo` sao opt-in e devem estar ativos juntos somente no banco
-local. Qualquer outra combinacao, inclusive `demo` isolado ou junto de `prod`,
-mantem o estabelecimento e a credencial historica de demonstracao desativados.
+O profile `dev` e obrigatorio para usar os defaults locais. A aplicacao nao ativa
+nenhum ambiente implicitamente. Para habilitar o tenant de demonstracao no banco
+local, use explicitamente `dev,demo`. Qualquer outra combinacao, inclusive `demo`
+isolado ou junto de `prod`, mantem a credencial historica desativada.
 
 Acesse:
 
-- agenda pública: http://localhost:8080/agenda/agenda-demo
+- agenda pública demo, quando iniciado com `dev,demo`: http://localhost:8080/agenda/agenda-demo
 - painel: http://localhost:8080/panel
 
 ## Variáveis de ambiente
@@ -79,8 +80,14 @@ Acesse:
 |---|---|
 | DB_URL | URL JDBC do PostgreSQL |
 | DB_USERNAME | usuário do banco |
-| DB_PASSWORD | senha do banco, obrigatória |
-| SPRING_PROFILES_ACTIVE | use `dev,demo` apenas para habilitar a demonstracao local; em producao use `prod` |
+| DB_PASSWORD | senha do banco; obrigatória e sem fallback em produção |
+| APP_TIME_ZONE | timezone da aplicação e da sessão PostgreSQL; obrigatório em produção |
+| SPRING_PROFILES_ACTIVE | use `dev` localmente, `dev,demo` apenas para demo local e `prod` em produção |
+
+Em producao, `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` e `APP_TIME_ZONE` devem ser
+fornecidos explicitamente antes de iniciar com `SPRING_PROFILES_ACTIVE=prod`.
+Valores ausentes, vazios ou timezone invalido recusam o startup. Os profiles
+`prod,dev`, `prod,demo` e provisioning sem `prod` tambem sao recusados.
 
 O arquivo .env é ignorado pelo Git. Não publique senhas reais no código, nas migrations ou na documentação.
 
