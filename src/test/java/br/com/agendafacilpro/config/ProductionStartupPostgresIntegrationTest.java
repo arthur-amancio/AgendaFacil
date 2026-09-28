@@ -44,6 +44,9 @@ class ProductionStartupPostgresIntegrationTest {
     void validProductionConfigurationStartsTheFullApplication() {
         assertThat(environment.getActiveProfiles()).containsExactly("prod");
         assertThat(environment.getProperty("server.servlet.session.cookie.secure", Boolean.class)).isTrue();
+        assertThat(environment.getProperty("server.address")).isEqualTo("127.0.0.1");
+        assertThat(environment.getProperty("server.forward-headers-strategy")).isEqualTo("native");
+        assertThat(environment.getProperty("server.tomcat.remoteip.internal-proxies")).isEqualTo("127.0.0.1/32");
         assertThat(environment.getProperty("spring.thymeleaf.cache", Boolean.class)).isTrue();
         assertThat(environment.getProperty("app.provisioning.enabled", Boolean.class)).isFalse();
         assertThat(zoneId).isEqualTo(ZoneId.of("America/Sao_Paulo"));

@@ -38,6 +38,8 @@ class ApplicationYamlSecurityTest {
                 .contains("${APP_TIME_ZONE:America/Sao_Paulo}")
                 .contains("cache: false")
                 .contains("secure: false")
+                .doesNotContain("forward-headers-strategy")
+                .doesNotContain("remoteip:")
                 .doesNotContain("postdba");
     }
 
@@ -53,7 +55,17 @@ class ApplicationYamlSecurityTest {
                 .contains("cache: true")
                 .contains("secure: true")
                 .contains("enabled: false")
-                .doesNotContain("localhost")
+                .contains("address: 127.0.0.1")
+                .contains("forward-headers-strategy: native")
+                .contains("redirect-context-root: false")
+                .contains("remote-ip-header: X-Forwarded-For")
+                .contains("protocol-header: X-Forwarded-Proto")
+                .contains("host-header: X-Forwarded-Host")
+                .contains("internal-proxies: 127.0.0.1/32")
+                .doesNotContain("internal-proxies: ''")
+                .doesNotContain("10.0.0.0/8")
+                .doesNotContain("172.16.0.0/12")
+                .doesNotContain("192.168.0.0/16")
                 .doesNotContain("agendafacil}")
                 .doesNotContain("America/Sao_Paulo")
                 .doesNotContain("postdba");

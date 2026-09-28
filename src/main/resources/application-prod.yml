@@ -14,6 +14,15 @@ app:
     enabled: false
 
 server:
+  address: 127.0.0.1
+  forward-headers-strategy: native
+  tomcat:
+    redirect-context-root: false
+    remoteip:
+      remote-ip-header: X-Forwarded-For
+      protocol-header: X-Forwarded-Proto
+      host-header: X-Forwarded-Host
+      internal-proxies: 127.0.0.1/32
   servlet:
     session:
       cookie:
