@@ -7,6 +7,8 @@ spring:
       connection-init-sql: SET TIME ZONE '${APP_TIME_ZONE:}'
   thymeleaf:
     cache: true
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
 app:
   time-zone: ${APP_TIME_ZONE:}
@@ -15,6 +17,7 @@ app:
 
 server:
   address: 127.0.0.1
+  shutdown: graceful
   forward-headers-strategy: native
   tomcat:
     redirect-context-root: false
@@ -27,3 +30,32 @@ server:
     session:
       cookie:
         secure: true
+
+management:
+  server:
+    address: 127.0.0.1
+    port: 8081
+  endpoints:
+    access:
+      default: none
+      max-permitted: read-only
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
+    shutdown:
+      access: none

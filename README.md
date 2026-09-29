@@ -97,6 +97,21 @@ headers `X-Forwarded-*` enviados pelo cliente e escrever seus proprios
 `127.0.0.1/32`; conexoes de outras origens nao podem controlar o IP remoto nem
 marcar uma requisicao HTTP como HTTPS.
 
+### Health interno e encerramento
+
+Em producao, o servidor principal permanece em `127.0.0.1:8080` e o Actuator
+escuta separadamente em `127.0.0.1:8081`. Somente os endpoints abaixo existem
+por HTTP e podem ser consultados sem login pela infraestrutura local:
+
+- `/actuator/health`;
+- `/actuator/health/liveness`, composto apenas por `livenessState`;
+- `/actuator/health/readiness`, composto por `readinessState` e `db`.
+
+Uma falha do PostgreSQL derruba readiness, mas nao liveness. As respostas nunca
+mostram componentes ou detalhes internos. Nao existe shutdown HTTP; o processo
+usa graceful shutdown nativo com limite de 20 segundos. Integracao com systemd
+e politica de restart pertencem a uma etapa operacional posterior.
+
 O arquivo .env é ignorado pelo Git. Não publique senhas reais no código, nas migrations ou na documentação.
 
 ## Autor

@@ -30,7 +30,10 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "server.address=0.0.0.0",
+        properties = {
+                "server.address=0.0.0.0",
+                "management.server.port=0"
+        },
         classes = {AgendaFacilProApplication.class, TrustedProxyPostgresIntegrationTest.ProxyProbeConfiguration.class})
 @ActiveProfiles("prod")
 @Testcontainers
