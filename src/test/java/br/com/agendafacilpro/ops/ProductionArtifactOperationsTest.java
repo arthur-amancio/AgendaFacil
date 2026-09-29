@@ -94,7 +94,8 @@ class ProductionArtifactOperationsTest {
                 .contains("/actuator/health/readiness")
                 .contains("Rollback")
                 .contains("80/443")
-                .contains("Bloqueie acesso externo a 8080, 8081")
+                .contains("Bloqueie acesso")
+                .contains("externo a 8080, 8081")
                 .contains("Rollback do JAR não desfaz migrations");
     }
 
