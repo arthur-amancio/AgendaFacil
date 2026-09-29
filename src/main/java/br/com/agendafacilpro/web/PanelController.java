@@ -28,13 +28,16 @@ import br.com.agendafacilpro.repo.ProfessionalRepo;
 import br.com.agendafacilpro.repo.ServiceItemRepo;
 import br.com.agendafacilpro.repo.TimeBlockRepo;
 import br.com.agendafacilpro.service.AppointmentService;
+import br.com.agendafacilpro.service.BusinessException;
 import br.com.agendafacilpro.service.BusinessHoursForm;
 import br.com.agendafacilpro.service.BusinessHoursService;
 import br.com.agendafacilpro.service.CurrentUserService;
 import br.com.agendafacilpro.service.DashboardService;
 import br.com.agendafacilpro.service.EstablishmentSettingsForm;
 import br.com.agendafacilpro.service.EstablishmentSettingsService;
+import br.com.agendafacilpro.service.InvalidRequestException;
 import br.com.agendafacilpro.service.ManualAppointmentRequest;
+import br.com.agendafacilpro.service.ResourceNotFoundException;
 import br.com.agendafacilpro.util.PhoneNormalizer;
 import br.com.agendafacilpro.web.form.ProfessionalForm;
 import br.com.agendafacilpro.web.form.ServiceForm;
@@ -186,8 +189,8 @@ public class PanelController {
             appointments.createManual(user.getEstablishment(), user, request);
             r.addFlashAttribute("success", "Novo agendamento confirmado. Esse horário ficou indisponível na agenda pública.");
             return "redirect:/panel/appointments";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/appointments");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/appointments");
         }
     }
 
@@ -197,8 +200,8 @@ public class PanelController {
             appointments.approve(id, current.establishmentId(), current.user());
             r.addFlashAttribute("success", "Reserva aprovada e horário confirmado.");
             return "redirect:/panel/appointments";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/appointments");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/appointments");
         }
     }
 
@@ -208,8 +211,8 @@ public class PanelController {
             appointments.reject(id, current.establishmentId(), current.user());
             r.addFlashAttribute("success", "Reserva recusada. O horário voltou a ficar disponível.");
             return "redirect:/panel/appointments";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/appointments");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/appointments");
         }
     }
 
@@ -219,8 +222,8 @@ public class PanelController {
             appointments.complete(id, current.establishmentId(), current.user());
             r.addFlashAttribute("success", "Atendimento marcado como concluído.");
             return "redirect:/panel/appointments";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/appointments");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/appointments");
         }
     }
 
@@ -230,8 +233,8 @@ public class PanelController {
             appointments.noShow(id, current.establishmentId(), current.user());
             r.addFlashAttribute("success", "Falta registrada no histórico do cliente.");
             return "redirect:/panel/appointments";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/appointments");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/appointments");
         }
     }
 
@@ -241,8 +244,8 @@ public class PanelController {
             appointments.cancel(id, current.establishmentId(), reason, current.user());
             r.addFlashAttribute("success", "Agendamento cancelado sem apagar o histórico.");
             return "redirect:/panel/appointments";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/appointments");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/appointments");
         }
     }
 
@@ -259,8 +262,8 @@ public class PanelController {
             services.save(s);
             r.addFlashAttribute("success", "Serviço salvo com sucesso.");
             return "redirect:/panel/services";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/services");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/services");
         }
     }
 
@@ -271,14 +274,14 @@ public class PanelController {
         }
         try {
             ServiceItem s = services.findByIdAndEstablishmentId(id, current.establishmentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado para este estabelecimento."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado para este estabelecimento."));
             applyServiceFields(s, form);
             s.setActive(form.active());
             services.save(s);
             r.addFlashAttribute("success", "Serviço atualizado com sucesso.");
             return "redirect:/panel/services";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/services");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/services");
         }
     }
 
@@ -286,13 +289,13 @@ public class PanelController {
     String toggleService(@PathVariable Long id, RedirectAttributes r) {
         try {
             ServiceItem s = services.findByIdAndEstablishmentId(id, current.establishmentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado para este estabelecimento."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado para este estabelecimento."));
             s.setActive(!s.isActive());
             services.save(s);
             r.addFlashAttribute("success", s.isActive() ? "Serviço reativado." : "Serviço arquivado.");
             return "redirect:/panel/services";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/services");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/services");
         }
     }
 
@@ -301,7 +304,7 @@ public class PanelController {
         try {
             Long est = current.establishmentId();
             ServiceItem s = services.findByIdAndEstablishmentId(id, est)
-                    .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado para este estabelecimento."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado para este estabelecimento."));
             if (appointmentsCountByService(est, id) > 0) {
                 s.setActive(false);
                 services.save(s);
@@ -311,8 +314,8 @@ public class PanelController {
                 r.addFlashAttribute("success", "Serviço excluído com sucesso.");
             }
             return "redirect:/panel/services";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/services");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/services");
         }
     }
 
@@ -329,8 +332,8 @@ public class PanelController {
             professionals.save(p);
             r.addFlashAttribute("success", "Profissional salvo com sucesso.");
             return "redirect:/panel/professionals";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/professionals");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/professionals");
         }
     }
 
@@ -342,13 +345,13 @@ public class PanelController {
         try {
             Long est = current.establishmentId();
             Professional p = professionals.findByIdAndEstablishmentId(id, est)
-                    .orElseThrow(() -> new IllegalArgumentException("Profissional não encontrado para este estabelecimento."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Profissional não encontrado para este estabelecimento."));
             applyProfessionalFields(p, form.name(), form.bio(), form.whatsapp(), form.active(), form.serviceIds(), est);
             professionals.save(p);
             r.addFlashAttribute("success", "Profissional atualizado com sucesso.");
             return "redirect:/panel/professionals";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/professionals");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/professionals");
         }
     }
 
@@ -356,16 +359,16 @@ public class PanelController {
     String toggleProf(@PathVariable Long id, RedirectAttributes r) {
         try {
             Professional p = professionals.findByIdAndEstablishmentId(id, current.establishmentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Profissional não encontrado para este estabelecimento."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Profissional não encontrado para este estabelecimento."));
             if (!p.isActive() && p.getServices().isEmpty()) {
-                throw new IllegalArgumentException("Selecione pelo menos um serviço para este profissional.");
+                throw new InvalidRequestException("Selecione pelo menos um serviço para este profissional.");
             }
             p.setActive(!p.isActive());
             professionals.save(p);
             r.addFlashAttribute("success", p.isActive() ? "Profissional reativado." : "Profissional arquivado.");
             return "redirect:/panel/professionals";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/professionals");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/professionals");
         }
     }
 
@@ -374,7 +377,7 @@ public class PanelController {
         try {
             Long est = current.establishmentId();
             Professional p = professionals.findByIdAndEstablishmentId(id, est)
-                    .orElseThrow(() -> new IllegalArgumentException("Profissional não encontrado para este estabelecimento."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Profissional não encontrado para este estabelecimento."));
             if (appointmentsCountByProfessional(est, id) > 0) {
                 p.setActive(false);
                 professionals.save(p);
@@ -384,8 +387,8 @@ public class PanelController {
                 r.addFlashAttribute("success", "Profissional excluído com sucesso.");
             }
             return "redirect:/panel/professionals";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/professionals");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/professionals");
         }
     }
 
@@ -396,7 +399,7 @@ public class PanelController {
         }
         try {
             if (!form.endAt().isAfter(form.startAt())) {
-                throw new IllegalArgumentException("Verifique os horários do bloqueio e tente novamente.");
+                throw new InvalidRequestException("Verifique os horários do bloqueio e tente novamente.");
             }
             AppUser u = current.user();
             TimeBlock b = new TimeBlock();
@@ -407,13 +410,13 @@ public class PanelController {
             b.setReason(form.reason());
             if (form.professionalId() != null) {
                 b.setProfessional(professionals.findByIdAndEstablishmentId(form.professionalId(), u.getEstablishment().getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Profissional não encontrado para este estabelecimento.")));
+                        .orElseThrow(() -> new ResourceNotFoundException("Profissional não encontrado para este estabelecimento.")));
             }
             blocks.save(b);
             r.addFlashAttribute("success", "Bloqueio criado com sucesso.");
             return "redirect:/panel/time-blocks";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/time-blocks");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/time-blocks");
         }
     }
 
@@ -421,13 +424,13 @@ public class PanelController {
     String toggleBlock(@PathVariable Long id, RedirectAttributes r) {
         try {
             TimeBlock b = blocks.findByIdAndEstablishmentId(id, current.establishmentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Bloqueio não encontrado para este estabelecimento."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Bloqueio não encontrado para este estabelecimento."));
             b.setActive(!b.isActive());
             blocks.save(b);
             r.addFlashAttribute("success", b.isActive() ? "Bloqueio reativado." : "Bloqueio pausado.");
             return "redirect:/panel/time-blocks";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/time-blocks");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/time-blocks");
         }
     }
 
@@ -440,8 +443,8 @@ public class PanelController {
             settingsService.update(current.user().getEstablishment(), form);
             r.addFlashAttribute("success", "Configurações salvas com sucesso.");
             return "redirect:/panel/settings";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/settings");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/settings");
         }
     }
 
@@ -455,8 +458,8 @@ public class PanelController {
             businessHours.update(user.getEstablishment(), days);
             r.addFlashAttribute("success", "Horários de funcionamento salvos com sucesso.");
             return "redirect:/panel/settings";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return panelError(r, ex.getMessage(), "/panel/settings");
+        } catch (BusinessException ex) {
+            return panelError(r, ex.publicMessage(), "/panel/settings");
         }
     }
 
@@ -531,7 +534,7 @@ public class PanelController {
 
     private void applyServiceFields(ServiceItem service, ServiceForm form) {
         if (form.durationMinutes() % 15 != 0) {
-            throw new IllegalArgumentException("Verifique os dados do serviço.");
+            throw new InvalidRequestException("Verifique os dados do serviço.");
         }
         service.setName(form.name().trim());
         service.setDurationMinutes(form.durationMinutes());
@@ -541,11 +544,11 @@ public class PanelController {
 
     private void applyProfessionalFields(Professional professional, String name, String bio, String whatsapp, boolean active, List<Long> serviceIds, Long establishmentId) {
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Informe o nome do profissional.");
+            throw new InvalidRequestException("Informe o nome do profissional.");
         }
         Set<ServiceItem> selectedServices = selectedServices(establishmentId, serviceIds);
         if (active && selectedServices.isEmpty()) {
-            throw new IllegalArgumentException("Selecione pelo menos um serviço para este profissional.");
+            throw new InvalidRequestException("Selecione pelo menos um serviço para este profissional.");
         }
         professional.setName(name.trim());
         professional.setBio(bio);
@@ -562,7 +565,7 @@ public class PanelController {
         for (Long serviceId : serviceIds) {
             ServiceItem service = services.findByIdAndEstablishmentId(serviceId, establishmentId)
                     .filter(ServiceItem::isActive)
-                    .orElseThrow(() -> new IllegalArgumentException("Selecione apenas serviços ativos deste estabelecimento."));
+                    .orElseThrow(() -> new InvalidRequestException("Selecione apenas serviços ativos deste estabelecimento."));
             selected.add(service);
         }
         return selected;
@@ -577,9 +580,6 @@ public class PanelController {
     }
 
     private String bindingMessage(BindingResult binding) {
-        return binding.getAllErrors().stream()
-                .findFirst()
-                .map(error -> error.getDefaultMessage() == null ? "Verifique os dados e tente novamente." : error.getDefaultMessage())
-                .orElse("Verifique os dados e tente novamente.");
+        return PublicValidationMessages.from(binding);
     }
 }

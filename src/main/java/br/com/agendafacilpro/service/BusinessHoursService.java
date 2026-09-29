@@ -52,7 +52,7 @@ public class BusinessHoursService {
     @Transactional
     public void update(Establishment establishment, List<BusinessHoursForm> forms) {
         if (forms == null || forms.size() != 7 || forms.stream().map(BusinessHoursForm::dayOfWeek).filter(Objects::nonNull).distinct().count() != 7) {
-            throw new IllegalArgumentException("Informe os horários dos sete dias da semana.");
+            throw new InvalidRequestException("Informe os horários dos sete dias da semana.");
         }
         for (BusinessHoursForm form : forms) {
             EstablishmentBusinessHours hours = repository.findByEstablishmentIdAndDayOfWeek(establishment.getId(), form.dayOfWeek())
@@ -70,7 +70,7 @@ public class BusinessHoursService {
         }
         if (form.openingTime() == null || form.closingTime() == null || !form.openingTime().isBefore(form.closingTime())) {
             String day = form.dayOfWeek().getDisplayName(TextStyle.FULL, Locale.forLanguageTag("pt-BR"));
-            throw new IllegalArgumentException("Informe abertura e fechamento válidos para " + day + ".");
+            throw new InvalidRequestException("Informe abertura e fechamento válidos para " + day + ".");
         }
         hours.setOpeningTime(form.openingTime().withSecond(0).withNano(0));
         hours.setClosingTime(form.closingTime().withSecond(0).withNano(0));

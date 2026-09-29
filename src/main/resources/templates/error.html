@@ -13,8 +13,7 @@
     <h1 th:text="${title ?: 'Não conseguimos abrir esta página'}">Não deu certo</h1>
     <p class="muted" th:text="${message ?: 'Tente novamente em alguns instantes.'}">Tente novamente.</p>
     <p>
-      <a class="btn primary" th:href="@{/}">Voltar ao início</a>
-      <a class="btn light" th:href="@{/agenda/agenda-demo}">Ir para a agenda</a>
+      <a class="btn primary" th:href="@{/login}">Ir para o login</a>
     </p>
   </section>
 </main>

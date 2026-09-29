@@ -4,7 +4,9 @@ import br.com.agendafacilpro.domain.*;
 import br.com.agendafacilpro.service.*;
 import br.com.agendafacilpro.web.form.PublicBookingForm;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -86,17 +88,16 @@ public class PublicBookingController {
     }
 
     @PostMapping("/agenda/{slug}/revisar")
-    String review(@PathVariable String slug, @Valid @ModelAttribute PublicBookingForm form, BindingResult binding, Model model) {
+    String review(@PathVariable String slug, @Valid @ModelAttribute PublicBookingForm form, BindingResult binding,
+                  Model model, HttpServletResponse response) {
         Establishment e = catalog.establishment(slug);
         if (binding.hasErrors()) {
-            return publicFormError(model, e, form, bindingMessage(binding));
+            return publicFormError(model, e, form, bindingMessage(binding), response);
         }
         try {
             appointments.validatePublicSlot(e, form.serviceId(), form.professionalId(), form.date(), form.time());
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            dataModel(model, e, form.serviceId(), form.professionalId(), form.date(), form.time(), form.customerName(), form.customerPhone());
-            model.addAttribute("error", ex.getMessage());
-            return "public/data";
+        } catch (BusinessException exception) {
+            return publicBusinessError(model, e, form, exception, response);
         }
         dataModel(model, e, form.serviceId(), form.professionalId(), form.date(), form.time(), form.customerName(), form.customerPhone());
         model.addAttribute("website", form.website());
@@ -105,18 +106,17 @@ public class PublicBookingController {
     }
 
     @PostMapping("/agenda/{slug}/confirmar")
-    String confirm(@PathVariable String slug, @Valid @ModelAttribute PublicBookingForm form, BindingResult binding, HttpServletRequest request, Model model) {
+    String confirm(@PathVariable String slug, @Valid @ModelAttribute PublicBookingForm form, BindingResult binding,
+                   HttpServletRequest request, Model model, HttpServletResponse response) {
         Establishment e = catalog.establishment(slug);
         if (binding.hasErrors()) {
-            return publicFormError(model, e, form, bindingMessage(binding));
+            return publicFormError(model, e, form, bindingMessage(binding), response);
         }
         try {
             Appointment a = appointments.create(e, form.serviceId(), form.professionalId(), form.date(), form.time(), form.customerName(), form.customerPhone(), request.getRemoteAddr(), form.website());
             return "redirect:/agenda/" + slug + "/sucesso/" + a.getPublicToken();
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            dataModel(model, e, form.serviceId(), form.professionalId(), form.date(), form.time(), form.customerName(), form.customerPhone());
-            model.addAttribute("error", ex.getMessage());
-            return "public/data";
+        } catch (BusinessException exception) {
+            return publicBusinessError(model, e, form, exception, response);
         }
     }
 
@@ -160,7 +160,9 @@ public class PublicBookingController {
                 .toList();
     }
 
-    private String publicFormError(Model model, Establishment establishment, PublicBookingForm form, String message) {
+    private String publicFormError(Model model, Establishment establishment, PublicBookingForm form, String message,
+                                   HttpServletResponse response) {
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
         if (form != null && form.hasTarget()) {
             dataModel(model, establishment, form.serviceId(), form.professionalId(), form.date(), form.time(), form.customerName(), form.customerPhone());
             model.addAttribute("error", message);
@@ -171,10 +173,26 @@ public class PublicBookingController {
         return "error";
     }
 
+    private String publicBusinessError(Model model, Establishment establishment, PublicBookingForm form,
+                                       BusinessException exception, HttpServletResponse response) {
+        dataModel(model, establishment, form.serviceId(), form.professionalId(), form.date(), form.time(),
+                form.customerName(), form.customerPhone());
+        response.setStatus(statusFor(exception).value());
+        model.addAttribute("error", exception.publicMessage());
+        return "public/data";
+    }
+
+    private HttpStatus statusFor(BusinessException exception) {
+        if (exception instanceof ResourceNotFoundException) {
+            return HttpStatus.NOT_FOUND;
+        }
+        if (exception instanceof StateConflictException) {
+            return HttpStatus.CONFLICT;
+        }
+        return HttpStatus.BAD_REQUEST;
+    }
+
     private String bindingMessage(BindingResult binding) {
-        return binding.getAllErrors().stream()
-                .findFirst()
-                .map(error -> error.getDefaultMessage() == null ? "Verifique os dados e tente novamente." : error.getDefaultMessage())
-                .orElse("Verifique os dados e tente novamente.");
+        return PublicValidationMessages.from(binding);
     }
 }
