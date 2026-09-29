@@ -21,4 +21,14 @@ class ErrorPagesSecurityTest {
                     .doesNotContain("java.");
         }
     }
+
+    @Test
+    void genericErrorPageDoesNotAssumeAnyTenant() throws Exception {
+        String html = Files.readString(Path.of("src/main/resources/templates/error.html"));
+
+        assertThat(html)
+                .doesNotContain("agenda-demo")
+                .doesNotContain("/agenda/")
+                .contains("@{/login}");
+    }
 }

@@ -13,6 +13,6 @@ public class AuthController {
 
     @GetMapping("/")
     String home() {
-        return "redirect:/agenda/agenda-demo";
+        return "redirect:/login";
     }
 }

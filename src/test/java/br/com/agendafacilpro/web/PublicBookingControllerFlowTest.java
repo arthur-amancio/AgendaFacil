@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.validation.BeanPropertyBindingResult;
 
@@ -42,7 +43,8 @@ class PublicBookingControllerFlowTest {
                 "agenda-demo",
                 form,
                 new BeanPropertyBindingResult(form, "bookingForm"),
-                new ExtendedModelMap()
+                new ExtendedModelMap(),
+                new MockHttpServletResponse()
         );
 
         assertThat(view).isEqualTo("public/confirm");
@@ -68,7 +70,8 @@ class PublicBookingControllerFlowTest {
                 form,
                 new BeanPropertyBindingResult(form, "bookingForm"),
                 new MockHttpServletRequest(),
-                new ExtendedModelMap()
+                new ExtendedModelMap(),
+                new MockHttpServletResponse()
         );
 
         assertThat(view).isEqualTo("redirect:/agenda/agenda-demo/sucesso/public-token-123456789012");
@@ -80,16 +83,19 @@ class PublicBookingControllerFlowTest {
         appointments.conflictOnCreate = true;
         PublicBookingForm form = bookingForm();
         ExtendedModelMap model = new ExtendedModelMap();
+        MockHttpServletResponse response = new MockHttpServletResponse();
 
         String view = controller.confirm(
                 "agenda-demo",
                 form,
                 new BeanPropertyBindingResult(form, "bookingForm"),
                 new MockHttpServletRequest(),
-                model
+                model,
+                response
         );
 
         assertThat(view).isEqualTo("public/data");
+        assertThat(response.getStatus()).isEqualTo(409);
         assertThat(model.get("error")).isEqualTo(BookingConflictException.MESSAGE);
     }
 

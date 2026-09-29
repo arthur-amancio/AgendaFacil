@@ -66,7 +66,7 @@ class BusinessHoursServiceTest {
         Establishment establishment = new Establishment();
         establishment.setId(1L);
         assertThatThrownBy(() -> service.update(establishment, List.of()))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("sete dias");
     }
 

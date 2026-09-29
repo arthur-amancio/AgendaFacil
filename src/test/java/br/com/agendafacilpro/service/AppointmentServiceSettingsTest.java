@@ -121,7 +121,7 @@ class AppointmentServiceSettingsTest {
         when(appointments.countFutureByPhone(eq(1L), eq("17988887777"), any(), any(LocalDateTime.class))).thenReturn(3L);
 
         assertThatThrownBy(this::create)
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("fale com o estabelecimento");
     }
 
@@ -143,7 +143,7 @@ class AppointmentServiceSettingsTest {
         when(customers.findByEstablishmentIdAndPhoneNormalized(1L, "17988887777")).thenReturn(Optional.of(customer));
 
         assertThatThrownBy(this::create)
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("fale com o estabelecimento");
     }
 
@@ -154,7 +154,7 @@ class AppointmentServiceSettingsTest {
         when(customers.findByEstablishmentIdAndPhoneNormalized(1L, "17988887777")).thenReturn(Optional.of(customer));
 
         assertThatThrownBy(this::create)
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("fale com o estabelecimento");
     }
 
@@ -192,7 +192,7 @@ class AppointmentServiceSettingsTest {
         when(appointments.findByIdAndEstablishmentId(99L, 1L)).thenReturn(Optional.of(pending));
 
         assertThatThrownBy(() -> service.approve(99L, 1L))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(StateConflictException.class)
                 .hasMessageContaining("expirou antes da aprovação");
 
         assertThat(pending.getStatus()).isEqualTo(AppointmentStatus.EXPIRED);

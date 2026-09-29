@@ -106,6 +106,14 @@ O serviço, o profissional e o vínculo entre eles são sempre buscados pelo `es
 
 O horário enviado no POST público ou manual também é revalidado no backend. A aplicação não confia apenas nos links renderizados pelo HTML para decidir disponibilidade.
 
+## Fronteira HTTP de erros
+
+Somente exceções da hierarquia `BusinessException` possuem mensagem pública controlada. `InvalidRequestException` representa entrada inválida (HTTP 400), `ResourceNotFoundException` representa recurso ausente ou indisponível (HTTP 404) e `StateConflictException`, incluindo `BookingConflictException`, representa conflito de estado (HTTP 409).
+
+Mensagens de Bean Validation só são reaproveitadas quando vêm de constraints Jakarta conhecidas. Qualquer outra exception é tratada como erro interno: o stacktrace fica no log, a resposta usa HTTP 500 e uma mensagem fixa. A camada web não publica `getMessage()` de exceptions arbitrárias e não usa palavras bloqueadas como mecanismo de sanitização.
+
+POSTs do painel preservam Post/Redirect/Get para manter a operação segura contra reenvio. Nesses redirects, apenas mensagens de `BusinessException` ou de constraints controladas podem virar flash attribute.
+
 ## Headers HTTP
 
 O `SecurityConfig` envia headers para reduzir risco de clickjacking, sniffing e vazamento de origem:

@@ -19,7 +19,8 @@ public class CurrentUserService {
     @Transactional(readOnly = true)
     public AppUser user() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return users.findByEmailIgnoreCase(email).orElseThrow(() -> new IllegalStateException("Sessão expirada. Faça login novamente."));
+        return users.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new StateConflictException("Sessão expirada. Faça login novamente."));
     }
 
     @Transactional(readOnly = true)
