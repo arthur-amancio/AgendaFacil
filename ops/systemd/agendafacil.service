@@ -1,0 +1,27 @@
+[Unit]
+Description=AgendaFacil Pro
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=60s
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=agendafacil
+Group=agendafacil
+WorkingDirectory=/opt/agendafacil/current
+EnvironmentFile=/etc/agendafacil/agendafacil.env
+ExecStart=/usr/bin/java -jar /opt/agendafacil/current/agendafacil-pro.jar
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

@@ -109,8 +109,8 @@ por HTTP e podem ser consultados sem login pela infraestrutura local:
 
 Uma falha do PostgreSQL derruba readiness, mas nao liveness. As respostas nunca
 mostram componentes ou detalhes internos. Nao existe shutdown HTTP; o processo
-usa graceful shutdown nativo com limite de 20 segundos. Integracao com systemd
-e politica de restart pertencem a uma etapa operacional posterior.
+usa graceful shutdown nativo com limite de 20 segundos. O procedimento manual
+de instalação do JAR, systemd e Caddy está em [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 O arquivo .env é ignorado pelo Git. Não publique senhas reais no código, nas migrations ou na documentação.
 
