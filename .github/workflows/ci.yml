@@ -26,3 +26,28 @@ jobs:
 
       - name: Run tests
         run: mvn clean verify
+
+      - name: Prepare distribution artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t jars < <(find target -maxdepth 1 -type f -name 'agendafacil-pro-*.jar' ! -name '*.original' -print)
+          test "${#jars[@]}" -eq 1
+          unzip -p "${jars[0]}" META-INF/MANIFEST.MF > target/distribution-manifest.txt
+          grep -q '^Main-Class: org.springframework.boot.loader.launch.JarLauncher' target/distribution-manifest.txt
+          grep -q '^Start-Class: br.com.agendafacilpro.AgendaFacilProApplication' target/distribution-manifest.txt
+          jar tf "${jars[0]}" > target/distribution-jar-contents.txt
+          grep -q '^BOOT-INF/classes/' target/distribution-jar-contents.txt
+          mkdir -p dist
+          cp "${jars[0]}" dist/agendafacil-pro.jar
+          (cd dist && sha256sum agendafacil-pro.jar > SHA256SUMS)
+          (cd dist && sha256sum --check SHA256SUMS)
+          test "$(find dist -maxdepth 1 -type f | wc -l)" -eq 2
+
+      - name: Upload distribution artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: agendafacil-pro-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
