@@ -115,7 +115,8 @@ class PanelControllerCatalogPolicyTest {
 
         assertThat(route).isEqualTo("redirect:/panel/services");
         verify(services, never()).delete(any(ServiceItem.class));
-        assertThat(redirect.getFlashAttributes()).containsKey("error");
+        assertThat(redirect.getFlashAttributes().get("error"))
+                .isEqualTo("Serviço não encontrado para este estabelecimento.");
     }
 
     @Test
@@ -154,7 +155,8 @@ class PanelControllerCatalogPolicyTest {
 
         assertThat(route).isEqualTo("redirect:/panel/professionals");
         verify(professionals, never()).delete(any(Professional.class));
-        assertThat(redirect.getFlashAttributes()).containsKey("error");
+        assertThat(redirect.getFlashAttributes().get("error"))
+                .isEqualTo("Profissional não encontrado para este estabelecimento.");
     }
 
     @Test

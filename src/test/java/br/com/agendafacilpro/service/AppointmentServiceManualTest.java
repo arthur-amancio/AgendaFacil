@@ -125,7 +125,7 @@ class AppointmentServiceManualTest {
         when(appointments.existsBlockingOverlap(eq(1L), eq(3L), any(LocalDateTime.class), any(LocalDateTime.class), any(), any())).thenReturn(true);
 
         assertThatThrownBy(() -> service.createManual(establishment, user, request("Ana Cliente", "(17) 98888-7777")))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("não está disponível para este serviço");
 
         verify(appointments, never()).saveAndFlush(any(Appointment.class));
@@ -150,21 +150,21 @@ class AppointmentServiceManualTest {
         professional.getServices().clear();
 
         assertThatThrownBy(() -> service.createManual(establishment, user, request("Ana Cliente", "(17) 98888-7777")))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("não realiza o serviço escolhido");
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("indisponível para o serviço escolhido");
     }
 
     @Test
     void manualBookingRejectsManipulatedTimeOutsideSlotGrid() {
         assertThatThrownBy(() -> service.createManual(establishment, user, requestAt("Ana Cliente", "(17) 98888-7777", LocalTime.of(9, 10))))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("não está disponível para este serviço");
     }
 
     @Test
     void manualBookingRejectsTimeOutsideBusinessHours() {
         assertThatThrownBy(() -> service.createManual(establishment, user, requestAt("Ana Cliente", "(17) 98888-7777", LocalTime.of(18, 0))))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("não está disponível para este serviço");
     }
 
@@ -173,7 +173,7 @@ class AppointmentServiceManualTest {
         when(hoursRepo.findByEstablishmentIdAndDayOfWeek(eq(1L), any(DayOfWeek.class))).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.createManual(establishment, user, request("Ana Cliente", "(17) 98888-7777")))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("não está disponível");
         verify(appointments, never()).saveAndFlush(any(Appointment.class));
     }

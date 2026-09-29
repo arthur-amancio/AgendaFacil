@@ -23,7 +23,7 @@ class EstablishmentIsolationTest {
         when(appointments.findByIdAndEstablishmentId(10L, 2L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.approve(10L, 2L, null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
 
         verify(appointments, never()).save(org.mockito.ArgumentMatchers.any(Appointment.class));
     }
@@ -33,7 +33,7 @@ class EstablishmentIsolationTest {
         when(appointments.findByIdAndEstablishmentId(10L, 2L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.cancel(10L, 2L, "teste", null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
 
         verify(appointments, never()).save(org.mockito.ArgumentMatchers.any(Appointment.class));
     }
