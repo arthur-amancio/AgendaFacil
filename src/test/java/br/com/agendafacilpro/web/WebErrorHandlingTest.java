@@ -1,7 +1,10 @@
 package br.com.agendafacilpro.web;
 
-import static org.hamcrest.Matchers.not;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -15,6 +18,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -26,6 +31,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.stereotype.Controller;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.beanvalidation.SpringValidatorAdapter;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import br.com.agendafacilpro.domain.Establishment;
@@ -37,11 +44,20 @@ import br.com.agendafacilpro.service.BookingConflictException;
 import br.com.agendafacilpro.service.CatalogService;
 import br.com.agendafacilpro.service.EstablishmentSettingsService;
 import br.com.agendafacilpro.service.ResourceNotFoundException;
+import br.com.agendafacilpro.web.form.PublicBookingForm;
+import jakarta.validation.Constraint;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Payload;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 
 class WebErrorHandlingTest {
 
     private static final String INTERNAL_DETAIL =
             "jdbc:postgresql://secret-host/internal password=super-secret";
+    private static final Validator VALIDATOR = Validation.buildDefaultValidatorFactory().getValidator();
 
     private CatalogService catalog;
     private AppointmentService appointments;
@@ -137,6 +153,35 @@ class WebErrorHandlingTest {
         }
     }
 
+    @Test
+    void jakartaConstraintViolationCanExposeItsControlledMessage() throws Exception {
+        mvc.perform(get("/__failure/jakarta-constraint"))
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("error"))
+                .andExpect(model().attribute("message", "Informe o nome."));
+    }
+
+    @Test
+    void customConstraintWithJakartaSimpleNameCannotExposeItsMessage() throws Exception {
+        mvc.perform(get("/__failure/custom-constraint"))
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("error"))
+                .andExpect(model().attribute("message", PublicValidationMessages.GENERIC_MESSAGE))
+                .andExpect(model().attribute("message", not(containsString("secret-host"))))
+                .andExpect(model().attribute("message", not(containsString("super-secret"))))
+                .andExpect(model().attribute("message", not(containsString("jdbc:"))));
+    }
+
+    @Test
+    void bindingResultStillAllowsKnownJakartaConstraintMessage() {
+        PublicBookingForm form = new PublicBookingForm(
+                2L, 3L, LocalDate.of(2030, 1, 7), LocalTime.of(9, 0), "", "(17) 98888-7777", "");
+        BeanPropertyBindingResult binding = new BeanPropertyBindingResult(form, "publicBookingForm");
+        new SpringValidatorAdapter(VALIDATOR).validate(form, binding);
+
+        assertThat(PublicValidationMessages.from(binding)).isEqualTo("Informe seu nome.");
+    }
+
     private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder validBooking(String path) {
         return post(path)
                 .param("serviceId", "2")
@@ -192,6 +237,48 @@ class WebErrorHandlingTest {
         @GetMapping("/__failure/state")
         String state() {
             throw new IllegalStateException(INTERNAL_DETAIL);
+        }
+
+        @GetMapping("/__failure/jakarta-constraint")
+        String jakartaConstraint() {
+            throw new ConstraintViolationException(VALIDATOR.validate(new JakartaConstraintTarget()));
+        }
+
+        @GetMapping("/__failure/custom-constraint")
+        String customConstraint() {
+            throw new ConstraintViolationException(VALIDATOR.validate(new CustomConstraintTarget()));
+        }
+    }
+
+    static class JakartaConstraintTarget {
+
+        @jakarta.validation.constraints.NotBlank(message = "Informe o nome.")
+        private final String name = "";
+    }
+
+    static class CustomConstraintTarget {
+
+        @NotBlank
+        private final String value = "";
+    }
+
+    @Target(FIELD)
+    @Retention(RUNTIME)
+    @Constraint(validatedBy = AlwaysInvalidValidator.class)
+    @interface NotBlank {
+
+        String message() default INTERNAL_DETAIL;
+
+        Class<?>[] groups() default {};
+
+        Class<? extends Payload>[] payload() default {};
+    }
+
+    public static class AlwaysInvalidValidator implements ConstraintValidator<NotBlank, String> {
+
+        @Override
+        public boolean isValid(String value, ConstraintValidatorContext context) {
+            return false;
         }
     }
 }
