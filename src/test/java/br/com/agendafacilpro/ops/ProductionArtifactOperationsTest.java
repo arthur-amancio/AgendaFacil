@@ -87,6 +87,21 @@ class ProductionArtifactOperationsTest {
         String deployment = read("docs/DEPLOYMENT.md");
 
         assertThat(deployment)
+                .containsSubsequence(
+                        "1. Instale um JRE ou JDK Java 17 suportado",
+                        "2. Instale o Caddy",
+                        "3. Crie o usuário de serviço",
+                        "4. Crie os diretórios operacionais",
+                        "5. Copie `ops/env/agendafacil.env.example`",
+                        "6. Instale `ops/systemd/agendafacil.service`",
+                        "7. Configure o domínio real no DNS",
+                        "8. Copie `ops/caddy/Caddyfile.example`",
+                        "9. No firewall",
+                        "10. Habilite o Caddy e a aplicação")
+                .contains("java -version")
+                .contains("test -x /usr/bin/java")
+                .contains("caddy version")
+                .contains("caddy validate --config /etc/caddy/Caddyfile")
                 .contains("/opt/agendafacil/releases/<release-id>")
                 .contains("/etc/agendafacil/agendafacil.env")
                 .contains("sha256sum --check SHA256SUMS")
@@ -97,6 +112,28 @@ class ProductionArtifactOperationsTest {
                 .contains("Bloqueie acesso")
                 .contains("externo a 8080, 8081")
                 .contains("Rollback do JAR não desfaz migrations");
+    }
+
+    @Test
+    void deploymentRunbookWaitsForReadinessWithFiniteTimeoutBeforeHttpsSmokeTest() throws Exception {
+        String deployment = read("docs/DEPLOYMENT.md");
+
+        assertThat(deployment)
+                .contains("readiness_timeout_seconds=60")
+                .contains("readiness_poll_seconds=2")
+                .contains("readiness_deadline=$((SECONDS + readiness_timeout_seconds))")
+                .contains("while (( SECONDS < readiness_deadline ))")
+                .contains("curl --fail --silent --max-time \"$readiness_poll_seconds\" \"$readiness_url\"")
+                .contains("/actuator/health/readiness")
+                .contains("grep -Eq '\"status\"[[:space:]]*:[[:space:]]*\"UP\"'")
+                .contains("sleep \"$readiness_poll_seconds\"")
+                .contains("if [[ \"$readiness_up\" != true ]]")
+                .contains("exit 1")
+                .contains("Readiness UP. Prosseguindo para o smoke test HTTPS.")
+                .doesNotContain("while true");
+
+        assertThat(deployment.indexOf("curl --fail --silent --show-error https://agenda.example.com/login"))
+                .isGreaterThan(deployment.indexOf("exit 1"));
     }
 
     private String read(String path) throws Exception {
