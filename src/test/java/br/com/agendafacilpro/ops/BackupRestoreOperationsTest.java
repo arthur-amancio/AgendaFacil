@@ -185,7 +185,7 @@ class BackupRestoreOperationsTest {
 
     @Test
     void runbookSeparatesArtifactsBackupsOffsiteRequirementAndUnprovenTargets() throws Exception {
-        String runbook = read(Path.of("docs/BACKUP_RESTORE.md"));
+        String runbook = read(Path.of("docs/BACKUP_RESTORE.md")).replaceAll("\\s+", " ");
 
         assertThat(runbook)
                 .contains("formato custom")
