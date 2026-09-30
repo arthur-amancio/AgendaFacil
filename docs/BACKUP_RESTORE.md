@@ -193,9 +193,10 @@ Depois do restore:
    copiar senha ou chave privada;
 4. descarte com segurança o ambiente temporário e revise o RPO/RTO medido.
 
-Um exercício de restore deve ocorrer antes do piloto e depois periodicamente.
-O backup diário só pode ser considerado operacional após ao menos um restore
-completo e documentado.
+O CI executa um rehearsal descartável conforme
+[RECOVERY_REHEARSAL.md](RECOVERY_REHEARSAL.md). Ele valida a cadeia técnica com
+dados sintéticos, mas não substitui um restore completo a partir do futuro
+storage off-site real na infraestrutura final.
 
 ## Falhas e resposta operacional
 
@@ -209,7 +210,7 @@ completo e documentado.
 - Se o restore recusar o database por não estar vazio, crie outro database; não
   edite o script nem apague objetos do alvo para contornar o guard.
 
-Alertas automáticos, exportação off-site automatizada, métricas e exercícios
-agendados pertencem ao hardening operacional posterior (P0.6.8). Até lá, o
-responsável pelo piloto deve verificar diariamente o timer, o journal e a idade
-do último bundle válido.
+Alertas automáticos, exportação off-site real e métricas continuam fora deste
+gate. Até que sejam configurados, o responsável pelo piloto deve verificar o
+timer, o journal e a idade do último bundle válido; o piloto real permanece
+bloqueado pelas condições registradas no runbook de rehearsal.
