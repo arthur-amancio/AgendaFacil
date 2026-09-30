@@ -1,0 +1,29 @@
+[Unit]
+Description=AgendaFacil PostgreSQL encrypted logical backup
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=agendafacil-backup
+Group=agendafacil-backup
+EnvironmentFile=/etc/agendafacil/backup.env
+Environment=GNUPGHOME=/var/lib/agendafacil-backup/gnupg
+RuntimeDirectory=agendafacil-backup
+RuntimeDirectoryMode=0700
+StateDirectory=agendafacil-backup
+StateDirectoryMode=0700
+WorkingDirectory=/var/lib/agendafacil-backup
+ExecStart=/usr/local/libexec/agendafacil/backup-postgres.sh
+TimeoutStartSec=2h
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/run/agendafacil-backup /var/lib/agendafacil-backup
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true

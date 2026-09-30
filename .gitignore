@@ -4,3 +4,7 @@ dist/
 .vscode/
 *.iml
 .env
+*.dump
+*.dump.gpg
+*.dump.gpg.sha256
+backup-repository/
