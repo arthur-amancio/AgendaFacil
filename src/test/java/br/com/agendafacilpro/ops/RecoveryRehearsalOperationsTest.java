@@ -76,6 +76,8 @@ class RecoveryRehearsalOperationsTest {
                 .contains("restored_establishments")
                 .contains("restored_appointments")
                 .contains("restored Flyway history differs from source")
+                .contains("Backup duration milliseconds:")
+                .contains("Recovery duration milliseconds:")
                 .contains("Production RPO/RTO proof: NOT ESTABLISHED")
                 .doesNotContain("AWS")
                 .doesNotContain("S3")

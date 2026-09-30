@@ -279,11 +279,11 @@ expect_failure backup-host-secret-key 'chave privada de restore' \
   run_backup "$recovery_gnupg" "$compromised_repository" "$backup_runtime"
 
 backup_started_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-backup_started_epoch="$(date -u +%s)"
+backup_started_millis="$(date -u +%s%3N)"
 run_backup "$backup_gnupg" "$backup_repository" "$backup_runtime"
 backup_completed_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-backup_completed_epoch="$(date -u +%s)"
-backup_duration_seconds=$((backup_completed_epoch - backup_started_epoch))
+backup_completed_millis="$(date -u +%s%3N)"
+backup_duration_millis=$((backup_completed_millis - backup_started_millis))
 
 mapfile -t source_bundles < <(find "$backup_repository/daily" -mindepth 1 -maxdepth 1 -type d -name 'agendafacil-*' -print)
 [[ ${#source_bundles[@]} -eq 1 ]] || fail "backup did not publish exactly one daily bundle"
@@ -314,7 +314,7 @@ rm -rf -- "$backup_repository"
 printf 'Simulated off-site transfer validated; original local repository discarded.\n'
 
 recovery_started_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-recovery_started_epoch="$(date -u +%s)"
+recovery_started_millis="$(date -u +%s%3N)"
 recovery_port="$(start_postgres "$recovery_container" "$recovery_database")"
 printf 'Recovery PostgreSQL server: %s\n' "$(scalar_query "$recovery_port" "$recovery_database" 'SHOW server_version;')"
 
@@ -379,8 +379,8 @@ flyway_rows_after_start="$(scalar_query "$recovery_port" "$recovery_database" \
 stop_application
 
 recovery_completed_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-recovery_completed_epoch="$(date -u +%s)"
-recovery_duration_seconds=$((recovery_completed_epoch - recovery_started_epoch))
+recovery_completed_millis="$(date -u +%s%3N)"
+recovery_duration_millis=$((recovery_completed_millis - recovery_started_millis))
 
 report="$work_root/recovery-rehearsal-report.txt"
 cat > "$report" <<REPORT
@@ -388,10 +388,10 @@ AgendaFacil recovery rehearsal: PASS
 Boundary: simulated off-site boundary; this is not proof of real off-site storage
 Backup started UTC: $backup_started_utc
 Backup completed UTC: $backup_completed_utc
-Backup duration seconds: $backup_duration_seconds
+Backup duration milliseconds: $backup_duration_millis
 Recovery started UTC: $recovery_started_utc
 Recovery completed UTC: $recovery_completed_utc
-Recovery duration seconds: $recovery_duration_seconds
+Recovery duration milliseconds: $recovery_duration_millis
 Bundle: $bundle_name
 Source/restored establishments: $source_establishments/$restored_establishments
 Source/restored appointments: $source_appointments/$restored_appointments

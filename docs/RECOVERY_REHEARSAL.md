@@ -106,9 +106,9 @@ POSTGRES_CLIENT_BIN=/usr/lib/postgresql/16/bin \
 Os logs e o GitHub Step Summary registram:
 
 - início e conclusão UTC do backup;
-- duração do backup em segundos;
+- duração do backup em milissegundos;
 - início e conclusão UTC do recovery;
-- duração total do recovery em segundos;
+- duração total do recovery em milissegundos;
 - bundle usado, contagens comparadas, digest do canário, smoke e readiness.
 
 As medições descrevem somente o runner descartável daquela execução. Um tempo
