@@ -44,6 +44,25 @@ jobs:
           (cd dist && sha256sum --check SHA256SUMS)
           test "$(find dist -maxdepth 1 -type f | wc -l)" -eq 2
 
+      - name: Prepare PostgreSQL 16 client
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -x /usr/lib/postgresql/16/bin/pg_dump ]]; then
+            sudo apt-get update
+            sudo apt-get install --yes postgresql-client-16
+          fi
+          /usr/lib/postgresql/16/bin/pg_dump --version
+          /usr/lib/postgresql/16/bin/pg_restore --version
+          /usr/lib/postgresql/16/bin/psql --version
+          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+
+      - name: Run disposable recovery rehearsal
+        shell: bash
+        env:
+          POSTGRES_CLIENT_BIN: /usr/lib/postgresql/16/bin
+        run: ops/recovery/run-recovery-rehearsal.sh dist/agendafacil-pro.jar
+
       - name: Upload distribution artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
