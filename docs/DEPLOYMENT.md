@@ -11,7 +11,7 @@ substitui backup, monitoramento ou gestão do PostgreSQL.
 - A aplicação e o health interno escutam apenas em loopback. A porta 8081 nunca
   deve ser publicada pelo firewall ou pelo proxy.
 - O PostgreSQL deve estar acessível somente pela aplicação e possuir backup
-  operacional independente.
+  operacional independente conforme [BACKUP_RESTORE.md](BACKUP_RESTORE.md).
 - O host precisa de um JRE/JDK Java 17 suportado, Caddy, systemd, `curl`,
   `grep` e `sha256sum`.
 
@@ -120,9 +120,11 @@ JAR local ou de outra execução.
    sudo chmod 0644 agendafacil-pro.jar SHA256SUMS
    ```
 
-3. Confirme o backup recente do PostgreSQL e revise as migrations incluídas na
-   release. O Flyway executa migrations no startup; interrompa o deploy se o
-   preflight da release não estiver concluído.
+3. Confirme que a última unit de backup terminou com sucesso, que o bundle
+   cifrado e seu checksum estão íntegros e que existe restore testado conforme
+   [BACKUP_RESTORE.md](BACKUP_RESTORE.md). Revise as migrations incluídas na
+   release. O Flyway executa migrations no startup; interrompa o deploy se esse
+   preflight não estiver concluído.
 4. Aponte atomicamente `current` para a nova release e reinicie o serviço:
 
    ```bash

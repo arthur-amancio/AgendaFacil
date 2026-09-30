@@ -1,0 +1,10 @@
+[Unit]
+Description=AgendaFacil nightly PostgreSQL backup at 06:00 UTC
+
+[Timer]
+OnCalendar=*-*-* 06:00:00 UTC
+Persistent=true
+Unit=agendafacil-backup.service
+
+[Install]
+WantedBy=timers.target
