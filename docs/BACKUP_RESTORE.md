@@ -157,7 +157,7 @@ restore completo. O P0.6.7 prepara os arquivos; não configura storage off-site.
 ## Restore fail-closed em banco novo
 
 Um restore é uma operação administrativa excepcional. Faça-o primeiro em host
-de recuperação isolado e em **database novo e vazio**. Não aponte o script ao
+de recuperação isolado e em **banco novo e vazio**. Não aponte o script ao
 database em uso pela aplicação e não use `--clean`: ele deliberadamente recusa
 qualquer alvo que já contenha tabelas de usuário.
 

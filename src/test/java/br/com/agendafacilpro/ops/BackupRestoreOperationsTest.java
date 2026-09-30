@@ -160,7 +160,7 @@ class BackupRestoreOperationsTest {
                 .contains("PrivateTmp=true")
                 .contains("ProtectHome=true")
                 .contains("ProtectSystem=strict")
-                .contains("ReadWritePaths=/var/lib/agendafacil-backup /run/agendafacil-backup")
+                .contains("ReadWritePaths=/run/agendafacil-backup /var/lib/agendafacil-backup")
                 .doesNotContain("User=root")
                 .doesNotContain("PrivateNetwork=true");
     }
