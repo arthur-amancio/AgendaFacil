@@ -2,14 +2,15 @@
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Entrar · AgendaFácil Pro</title><link rel="stylesheet" th:href="@{/css/app.css}"></head>
 <body class="auth">
   <main class="auth-card">
-    <div class="mark">A</div><h1>Entrar no painel</h1><p class="muted">A agenda do estabelecimento fica protegida por login.</p>
-    <div class="alert danger" th:if="${param.error}">Usuário ou senha inválidos.</div>
-    <div class="alert danger" th:if="${param.blocked}">Muitas tentativas. Tente novamente em alguns minutos.</div>
-    <div class="alert ok" th:if="${param.logout}">Você saiu do painel com segurança.</div>
+    <div class="auth-brand"><div class="mark" aria-hidden="true">A</div><strong>AgendaFácil</strong></div>
+    <h1>Entrar no painel</h1><p class="muted">Sua agenda e seus atendimentos em um só lugar.</p>
+    <div class="alert danger" th:if="${param.error}" role="alert">Usuário ou senha inválidos.</div>
+    <div class="alert danger" th:if="${param.blocked}" role="alert">Muitas tentativas. Tente novamente em alguns minutos.</div>
+    <div class="alert ok" th:if="${param.logout}" role="status">Você saiu do painel com segurança.</div>
     <form th:action="@{/login}" method="post" class="form">
       <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-      <label>E-mail<input name="email" type="email" placeholder="admin@demo.local" required autofocus></label>
-      <label>Senha<input name="password" type="password" placeholder="Sua senha" required></label>
+      <label>E-mail<input name="email" type="email" placeholder="voce@empresa.com" autocomplete="username" required autofocus></label>
+      <label>Senha<input name="password" type="password" placeholder="Sua senha" autocomplete="current-password" required></label>
       <button class="btn primary" type="submit">Entrar</button>
     </form>
     <small class="muted">Use as credenciais administrativas do estabelecimento.</small>

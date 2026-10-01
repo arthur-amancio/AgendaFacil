@@ -11,15 +11,15 @@
   </div>
 
   <nav class="side-nav" aria-label="Menu do painel">
-    <a th:href="@{/panel}" th:classappend="${activePage == 'dashboard' ? ' active' : ''}">Dashboard</a>
-    <a th:href="@{/panel/agenda}" th:classappend="${activePage == 'agenda' ? ' active' : ''}">Agenda</a>
-    <a th:href="@{/panel/appointments}" th:classappend="${activePage == 'appointments' ? ' active' : ''}">Agendamentos</a>
-    <a th:href="@{/panel/customers}" th:classappend="${activePage == 'customers' ? ' active' : ''}">Clientes</a>
-    <a th:href="@{/panel/services}" th:classappend="${activePage == 'services' ? ' active' : ''}">Serviços</a>
-    <a th:href="@{/panel/professionals}" th:classappend="${activePage == 'professionals' ? ' active' : ''}">Profissionais</a>
-    <a th:href="@{/panel/time-blocks}" th:classappend="${activePage == 'blocks' ? ' active' : ''}">Bloqueios</a>
-    <a th:href="@{/panel/settings}" th:classappend="${activePage == 'settings' ? ' active' : ''}">Configurações</a>
-    <a th:href="@{/panel/reports}" th:classappend="${activePage == 'reports' ? ' active' : ''}">Relatórios</a>
+    <a th:href="@{/panel}" th:classappend="${activePage == 'dashboard' ? ' active' : ''}" th:aria-current="${activePage == 'dashboard' ? 'page' : null}">Dashboard</a>
+    <a th:href="@{/panel/agenda}" th:classappend="${activePage == 'agenda' ? ' active' : ''}" th:aria-current="${activePage == 'agenda' ? 'page' : null}">Agenda</a>
+    <a th:href="@{/panel/appointments}" th:classappend="${activePage == 'appointments' ? ' active' : ''}" th:aria-current="${activePage == 'appointments' ? 'page' : null}">Agendamentos</a>
+    <a th:href="@{/panel/customers}" th:classappend="${activePage == 'customers' ? ' active' : ''}" th:aria-current="${activePage == 'customers' ? 'page' : null}">Clientes</a>
+    <a th:href="@{/panel/services}" th:classappend="${activePage == 'services' ? ' active' : ''}" th:aria-current="${activePage == 'services' ? 'page' : null}">Serviços</a>
+    <a th:href="@{/panel/professionals}" th:classappend="${activePage == 'professionals' ? ' active' : ''}" th:aria-current="${activePage == 'professionals' ? 'page' : null}">Profissionais</a>
+    <a th:href="@{/panel/time-blocks}" th:classappend="${activePage == 'blocks' ? ' active' : ''}" th:aria-current="${activePage == 'blocks' ? 'page' : null}">Bloqueios</a>
+    <a th:href="@{/panel/settings}" th:classappend="${activePage == 'settings' ? ' active' : ''}" th:aria-current="${activePage == 'settings' ? 'page' : null}">Configurações</a>
+    <a th:href="@{/panel/reports}" th:classappend="${activePage == 'reports' ? ' active' : ''}" th:aria-current="${activePage == 'reports' ? 'page' : null}">Relatórios</a>
   </nav>
 
   <div class="side-footer">
