@@ -17,7 +17,7 @@
       <span class="stepper-progress"><span th:style="|width: ${flowProgress}%|"></span></span>
     </div>
     <ol>
-      <li th:each="step : ${flowSteps}" th:classappend="${step.number < currentStep ? ' done' : (step.number == currentStep ? ' active' : '')}">
+      <li th:aria-current="${step.number == currentStep ? 'step' : null}" th:each="step : ${flowSteps}" th:classappend="${step.number < currentStep ? ' done' : (step.number == currentStep ? ' active' : '')}">
         <span th:text="${step.number}">1</span><b th:text="${step.label}">Serviço</b>
       </li>
     </ol>
