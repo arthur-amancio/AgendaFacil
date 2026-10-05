@@ -6,8 +6,8 @@
   <title>Profissional · AgendaFácil Pro</title>
   <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
-<body class="public">
-<main class="shell">
+<body class="public public-booking">
+<main class="shell public-booking-shell">
   <nav class="booking-stepper" aria-label="Etapas do agendamento">
     <div class="stepper-mobile-summary">
       <div>
@@ -26,33 +26,41 @@
   <a class="back" th:href="@{/agenda/{slug}(slug=${establishment.slug})}">← Voltar para serviços</a>
 
   <div class="booking-layout">
-    <aside class="booking-summary">
-      <span class="eyebrow">Resumo</span>
+    <aside class="booking-summary" aria-label="Resumo do agendamento">
+      <div class="summary-heading">
+        <span class="eyebrow">Seu agendamento</span>
+        <strong>Resumo até aqui</strong>
+      </div>
       <dl>
-        <dt>Serviço</dt><dd th:text="${service.name}">Ainda não escolhido</dd>
-        <dt>Duração</dt><dd th:text="|${service.durationMinutes} min|">Ainda não escolhido</dd>
-        <dt th:if="${settings.showPricesOnPublicPage and service.price != null}">Valor</dt>
-        <dd th:if="${settings.showPricesOnPublicPage and service.price != null}" th:text="|R$ ${#numbers.formatDecimal(service.price, 1, 'POINT', 2, 'COMMA')}|">Ainda não escolhido</dd>
-        <dt>Profissional</dt><dd class="summary-empty">Ainda não escolhido</dd>
-        <dt>Data</dt><dd class="summary-empty">Ainda não escolhido</dd>
-        <dt>Horário</dt><dd class="summary-empty">Ainda não escolhido</dd>
+        <div class="summary-item summary-item-wide"><dt>Serviço</dt><dd th:text="${service.name}">Ainda não escolhido</dd></div>
+        <div class="summary-item"><dt>Duração</dt><dd th:text="|${service.durationMinutes} min|">Ainda não escolhido</dd></div>
+        <div class="summary-item" th:if="${settings.showPricesOnPublicPage and service.price != null}"><dt>Valor</dt><dd th:text="|R$ ${#numbers.formatDecimal(service.price, 1, 'POINT', 2, 'COMMA')}|">Ainda não escolhido</dd></div>
+        <div class="summary-item summary-item-wide"><dt>Profissional</dt><dd class="summary-empty">Ainda não escolhido</dd></div>
+        <div class="summary-item"><dt>Data</dt><dd class="summary-empty">Ainda não escolhido</dd></div>
+        <div class="summary-item"><dt>Horário</dt><dd class="summary-empty">Ainda não escolhido</dd></div>
       </dl>
     </aside>
 
-    <section class="card">
+    <section class="card booking-main-card" aria-labelledby="professionals-title">
       <span class="eyebrow">Etapa 2 de 6</span>
-      <h1>Escolha quem vai atender você</h1>
-      <p class="muted">Mostramos apenas profissionais que realizam o serviço escolhido.</p>
+      <h1 id="professionals-title">Quem você prefere para o atendimento?</h1>
+      <p class="muted">Estes profissionais realizam <strong th:text="${service.name}">o serviço escolhido</strong>. Depois, você escolherá o dia e o horário.</p>
 
-      <div class="empty-state" th:if="${#lists.isEmpty(professionals)}">
-        Nenhum profissional disponível para este serviço no momento. Fale com o estabelecimento para mais informações.
+      <div class="empty-state public-empty-state" th:if="${#lists.isEmpty(professionals)}" role="status">
+        <strong>Nenhum profissional disponível</strong>
+        <span>Não há profissionais liberados para este serviço no momento. Volte e escolha outro serviço ou fale com o estabelecimento.</span>
       </div>
 
-      <div class="grid" th:if="${not #lists.isEmpty(professionals)}">
-        <a class="choice" th:each="professional : ${professionals}" th:href="@{/agenda/{slug}/servicos/{serviceId}/profissionais/{professionalId}/horarios(slug=${establishment.slug},serviceId=${service.id},professionalId=${professional.id})}">
-          <strong th:text="${professional.name}">Profissional</strong>
-          <span th:text="${professional.bio ?: 'Atendimento com horário marcado.'}">Atendimento cuidadoso.</span>
-          <small>Ver horários</small>
+      <div class="grid professional-grid" th:if="${not #lists.isEmpty(professionals)}">
+        <a class="choice professional-choice" th:each="professional : ${professionals}" th:href="@{/agenda/{slug}/servicos/{serviceId}/profissionais/{professionalId}/horarios(slug=${establishment.slug},serviceId=${service.id},professionalId=${professional.id})}">
+          <span class="choice-content">
+            <span class="professional-initial" aria-hidden="true" th:text="${#strings.substring(professional.name, 0, 1)}">P</span>
+            <span>
+              <strong th:text="${professional.name}">Profissional</strong>
+              <span class="choice-description" th:text="${professional.bio ?: 'Atendimento com horário marcado.'}">Atendimento cuidadoso.</span>
+            </span>
+          </span>
+          <span class="choice-action">Ver horários <span aria-hidden="true">→</span></span>
         </a>
       </div>
     </section>

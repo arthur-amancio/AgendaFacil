@@ -6,8 +6,8 @@
   <title>Confirmar agendamento · AgendaFácil Pro</title>
   <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
-<body class="public">
-<main class="shell narrow">
+<body class="public public-booking">
+<main class="shell narrow public-booking-shell">
   <nav class="booking-stepper" aria-label="Etapas do agendamento">
     <div class="stepper-mobile-summary">
       <div>
@@ -23,23 +23,31 @@
     </ol>
   </nav>
 
-  <section class="card">
+  <section class="card booking-main-card review-card" aria-labelledby="review-title">
     <span class="eyebrow">Etapa 6 de 6</span>
-    <h1>Revise antes de confirmar</h1>
-    <p class="muted">Confira os dados abaixo. O agendamento só será enviado depois que você tocar em confirmar.</p>
+    <h1 id="review-title">Está tudo certo?</h1>
+    <p class="muted">Confira o horário e seus dados. O pedido só será enviado depois da confirmação.</p>
 
-    <div class="booking-summary inline review">
+    <div class="booking-summary inline review" aria-label="Dados para confirmação">
+      <div class="summary-heading">
+        <span class="eyebrow">Revisão final</span>
+        <strong>Detalhes do agendamento</strong>
+      </div>
       <dl>
-        <dt>Serviço</dt><dd th:text="${service.name}">Serviço</dd>
-        <dt>Duração</dt><dd th:text="|${service.durationMinutes} min|">60 min</dd>
-        <dt th:if="${settings.showPricesOnPublicPage and service.price != null}">Valor</dt>
-        <dd th:if="${settings.showPricesOnPublicPage and service.price != null}" th:text="|R$ ${#numbers.formatDecimal(service.price, 1, 'POINT', 2, 'COMMA')}|">R$ 80,00</dd>
-        <dt>Profissional</dt><dd th:text="${professional.name}">Profissional</dd>
-        <dt>Data</dt><dd class="summary-important" th:text="${#temporals.format(selectedDate,'dd/MM/yyyy')}">24/06/2026</dd>
-        <dt>Horário</dt><dd class="summary-important" th:text="${#temporals.format(selectedTime,'HH:mm')}">10:30</dd>
-        <dt>Nome</dt><dd th:text="${customerName}">Cliente</dd>
-        <dt>WhatsApp</dt><dd th:text="${customerPhone}">(17) 99999-9999</dd>
+        <div class="summary-item summary-item-wide"><dt>Serviço</dt><dd th:text="${service.name}">Serviço</dd></div>
+        <div class="summary-item"><dt>Duração</dt><dd th:text="|${service.durationMinutes} min|">60 min</dd></div>
+        <div class="summary-item" th:if="${settings.showPricesOnPublicPage and service.price != null}"><dt>Valor</dt><dd th:text="|R$ ${#numbers.formatDecimal(service.price, 1, 'POINT', 2, 'COMMA')}|">R$ 80,00</dd></div>
+        <div class="summary-item summary-item-wide"><dt>Profissional</dt><dd th:text="${professional.name}">Profissional</dd></div>
+        <div class="summary-item summary-item-priority"><dt>Data</dt><dd class="summary-important" th:text="${#temporals.format(selectedDate,'dd/MM/yyyy')}">24/06/2026</dd></div>
+        <div class="summary-item summary-item-priority"><dt>Horário</dt><dd class="summary-important" th:text="${#temporals.format(selectedTime,'HH:mm')}">10:30</dd></div>
+        <div class="summary-item summary-item-wide"><dt>Nome</dt><dd th:text="${customerName}">Cliente</dd></div>
+        <div class="summary-item summary-item-wide"><dt>WhatsApp</dt><dd th:text="${customerPhone}">(17) 99999-9999</dd></div>
       </dl>
+    </div>
+
+    <div class="confirmation-note" role="status">
+      <strong>Ao confirmar, o estabelecimento receberá sua solicitação.</strong>
+      <span>O status final aparecerá na próxima tela.</span>
     </div>
 
     <form th:action="@{/agenda/{slug}/confirmar(slug=${establishment.slug})}" method="post" class="form">
@@ -53,7 +61,7 @@
       <input type="hidden" name="website" th:value="${website}">
 
       <div class="review-actions">
-        <button class="btn light" type="button" onclick="history.back()">Voltar e corrigir</button>
+        <a class="btn secondary" th:href="@{/agenda/{slug}/servicos/{serviceId}/profissionais/{professionalId}/dados(slug=${establishment.slug},serviceId=${service.id},professionalId=${professional.id},date=${selectedDate},time=${selectedTime})}">Voltar e corrigir</a>
         <button class="btn primary" type="submit">Confirmar agendamento</button>
       </div>
     </form>

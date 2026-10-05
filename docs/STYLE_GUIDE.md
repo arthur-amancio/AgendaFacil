@@ -2,7 +2,7 @@
 
 A fundação P1.1 é compartilhada pelo login, fluxo público, painel e páginas de erro. Priorize leitura, previsibilidade e ações claras: fundo neutro, superfícies brancas, bordas discretas e azul reservado à ação principal e à seleção. Sem fontes remotas, gradientes decorativos, elevação animada ou framework CSS.
 
-A fonte de verdade é `src/main/resources/static/css/app.css`. P1.1 estabelece componentes e shells; os módulos e as etapas públicas continuam com sua estrutura funcional existente.
+A fonte de verdade é `src/main/resources/static/css/app.css`. P1.1 estabelece componentes e shells; P1.2 aplica essa base ao fluxo público sem alterar rotas, regras de disponibilidade ou payloads.
 
 ## Tokens
 
@@ -76,8 +76,8 @@ Badges mantêm labels em português fornecidos por `AppointmentViewUtil`: confir
 ## Shells e navegação
 
 - Login: card central de até 440px, marca AgendaFácil, título e formulário. Placeholder neutro e autocomplete apropriado. Contrato continua POST `/login`, `email`, `password` e CSRF.
-- Público: `.shell` até 1080px; `.narrow` até 760px; hero com título fluido. Os seis passos e todas as URLs permanecem. Resumos mantêm pares label/valor, data e horário destacados.
-- Stepper: seis colunas compactas no desktop. Etapa atual tem borda inferior mais forte e `aria-current="step"`; concluídas têm borda tracejada e cor de sucesso. Até 700px aparece “Etapa X de 6”, nome sem truncamento obrigatório e progresso. O ícone de sucesso usa `.card > .done`, isolado de `.booking-stepper li.done`.
+- Público: `.shell` até 1080px; `.narrow` até 760px; hero com título fluido. `.public-booking` escopa os refinamentos do fluxo para não afetar login ou painel. Os seis passos e todas as URLs permanecem. Resumos usam grupos semânticos de label/valor, com data e horário destacados.
+- Stepper: seis colunas compactas no desktop. Etapa atual tem borda inferior mais forte e `aria-current="step"`; concluídas têm borda tracejada e cor de sucesso. Até 700px aparece “Etapa X de 6”, nome sem truncamento obrigatório e progresso; a tela combinada usa “Etapas 3 e 4 de 6 — Data e horário”. O ícone de sucesso usa `.card > .done`, isolado de `.booking-stepper li.done`.
 - Painel: sidebar escura de 248px acima de 900px, com rolagem própria se a altura for insuficiente. Item ativo tem borda lateral, peso e `aria-current="page"`. Conteúdo até 1440px dentro da área disponível; header sem card decorativo. As nove rotas administrativas permanecem.
 
 ## Foco e responsividade
@@ -87,6 +87,18 @@ Links, botões, inputs, selects e textareas usam outline de 2px com offset de 3p
 Breakpoints mantidos: 1200px (grades densas/filtros), 1100px (dashboard/settings), 980px (topo legado), 900px (sidebar no fluxo e layout público empilhado), 700px (stepper compacto, forms em uma coluna e padding menor), 600px (ajustes de métricas/sidebar), 520px (navegação em duas colunas) e 460px (ações e horários em uma coluna). Entre 521–900px a navegação tem três colunas. A sidebar deixa de ser sobreposta/fixa nesses tamanhos.
 
 Tabelas e agenda semanal mantêm overflow horizontal nos próprios contêineres. Não esconder overflow global para disfarçar problemas. Textos longos podem quebrar; grades públicas não impõem 230px quando o espaço disponível é menor. Alvos de QA: 1440×900, 1366×768, 768×1024, 390×844, 360×800 e 320×568.
+
+## Fluxo público de agendamento
+
+O fluxo público permanece server-rendered e funciona sem JavaScript. Cards de serviço e profissional são links inteiros, com nome, descrição ou bio, metadados e ação textual. Empty states usam mensagem explícita e `role="status"`.
+
+Na página de horários, data e horário continuam na mesma rota e representam as etapas 3 e 4. O seletor de data é um formulário GET; horários disponíveis são links com ação textual e borda de disponibilidade, enquanto indisponíveis permanecem visíveis, usam `aria-disabled="true"` e apresentam o motivo. Cor nunca é o único indicador.
+
+`.booking-summary` evolui junto das escolhas. No desktop, o resumo lateral permanece visível ao lado da ação; abaixo de 900px, o conteúdo principal vem primeiro e o resumo passa para baixo para não afastar o CTA. Resumos internos usam duas colunas quando há espaço e mantêm serviço/profissional em largura total. Data e horário recebem `.summary-item-priority` e `.summary-important`.
+
+O formulário de dados preserva `customerName`, `customerPhone`, o honeypot `website`, campos ocultos e CSRF. Labels visíveis, auxiliares associados por `aria-describedby` e a mensagem de revisão reduzem ambiguidade. A confirmação mantém todos os campos ocultos e oferece retorno por link GET funcional, sem depender de `history.back()` nem colocar nome ou telefone na URL.
+
+A tela de sucesso mostra status humano, próximo passo e resumo sem identificadores internos ou token público. O link de WhatsApp só existe quando fornecido pelo servidor e usa `target="_blank"` com `rel="noopener noreferrer"`.
 
 ## Compatibilidade e validação
 

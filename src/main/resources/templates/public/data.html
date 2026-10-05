@@ -6,8 +6,8 @@
   <title>Seus dados · AgendaFácil Pro</title>
   <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
-<body class="public">
-<main class="shell narrow">
+<body class="public public-booking">
+<main class="shell narrow public-booking-shell">
   <nav class="booking-stepper" aria-label="Etapas do agendamento">
     <div class="stepper-mobile-summary">
       <div>
@@ -25,46 +25,53 @@
 
   <a class="back" th:href="@{/agenda/{slug}/servicos/{serviceId}/profissionais/{professionalId}/horarios(slug=${establishment.slug},serviceId=${service.id},professionalId=${professional.id},date=${selectedDate})}">← Trocar horário</a>
 
-  <section class="card">
+  <section class="card booking-main-card" aria-labelledby="customer-data-title">
     <span class="eyebrow">Etapa 5 de 6</span>
-    <h1>Informe seus dados</h1>
-    <p class="muted">Use um WhatsApp válido para o estabelecimento conseguir falar com você.</p>
+    <h1 id="customer-data-title">Como o estabelecimento fala com você?</h1>
+    <p class="muted">Preencha seus dados de contato. Você não precisa criar uma conta.</p>
 
     <div class="alert danger" th:if="${error}" th:text="${error}" role="alert">Verifique os dados e tente novamente.</div>
 
-    <div class="booking-summary inline">
-      <span class="eyebrow">Resumo</span>
+    <div class="booking-summary inline compact-summary" aria-label="Resumo do agendamento">
+      <div class="summary-heading">
+        <span class="eyebrow">Seu agendamento</span>
+        <strong>Horário escolhido</strong>
+      </div>
       <dl>
-        <dt>Serviço</dt><dd th:text="${service.name}">Serviço</dd>
-        <dt>Duração</dt><dd th:text="|${service.durationMinutes} min|">60 min</dd>
-        <dt th:if="${settings.showPricesOnPublicPage and service.price != null}">Valor</dt>
-        <dd th:if="${settings.showPricesOnPublicPage and service.price != null}" th:text="|R$ ${#numbers.formatDecimal(service.price, 1, 'POINT', 2, 'COMMA')}|">R$ 80,00</dd>
-        <dt>Profissional</dt><dd th:text="${professional.name}">Profissional</dd>
-        <dt>Data</dt><dd class="summary-important" th:text="${#temporals.format(selectedDate,'dd/MM/yyyy')}">24/06/2026</dd>
-        <dt>Horário</dt><dd class="summary-important" th:text="${#temporals.format(selectedTime,'HH:mm')}">10:30</dd>
+        <div class="summary-item summary-item-wide"><dt>Serviço</dt><dd th:text="${service.name}">Serviço</dd></div>
+        <div class="summary-item"><dt>Duração</dt><dd th:text="|${service.durationMinutes} min|">60 min</dd></div>
+        <div class="summary-item" th:if="${settings.showPricesOnPublicPage and service.price != null}"><dt>Valor</dt><dd th:text="|R$ ${#numbers.formatDecimal(service.price, 1, 'POINT', 2, 'COMMA')}|">R$ 80,00</dd></div>
+        <div class="summary-item summary-item-wide"><dt>Profissional</dt><dd th:text="${professional.name}">Profissional</dd></div>
+        <div class="summary-item summary-item-priority"><dt>Data</dt><dd class="summary-important" th:text="${#temporals.format(selectedDate,'dd/MM/yyyy')}">24/06/2026</dd></div>
+        <div class="summary-item summary-item-priority"><dt>Horário</dt><dd class="summary-important" th:text="${#temporals.format(selectedTime,'HH:mm')}">10:30</dd></div>
       </dl>
     </div>
 
-    <form th:action="@{/agenda/{slug}/revisar(slug=${establishment.slug})}" method="post" class="form">
+    <form th:action="@{/agenda/{slug}/revisar(slug=${establishment.slug})}" method="post" class="form customer-form">
       <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
       <input type="hidden" name="serviceId" th:value="${service.id}">
       <input type="hidden" name="professionalId" th:value="${professional.id}">
       <input type="hidden" name="date" th:value="${selectedDate}">
       <input type="hidden" name="time" th:value="${selectedTime}">
 
-      <label>Seu nome
-        <input name="customerName" th:value="${customerName}" placeholder="Ex: Ana Clara" minlength="2" maxlength="120" autocomplete="name" required>
+      <label for="customer-name">Seu nome
+        <input id="customer-name" name="customerName" th:value="${customerName}" placeholder="Como você gostaria de ser chamado" minlength="2" maxlength="120" autocomplete="name" aria-describedby="customer-name-help" required>
+        <small id="customer-name-help">Usaremos este nome para identificar o agendamento.</small>
       </label>
 
-      <label>WhatsApp
-        <input name="customerPhone" th:value="${customerPhone}" placeholder="Ex: (17) 99999-9999" minlength="10" maxlength="20" autocomplete="tel" inputmode="tel" required>
+      <label for="customer-phone">WhatsApp
+        <input id="customer-phone" name="customerPhone" th:value="${customerPhone}" placeholder="(00) 00000-0000" minlength="10" maxlength="20" autocomplete="tel" inputmode="tel" aria-describedby="customer-phone-help" required>
+        <small id="customer-phone-help">O estabelecimento poderá usar este número para confirmar ou ajustar o horário.</small>
       </label>
 
       <label class="hp">Site
         <input name="website" tabindex="-1" autocomplete="off">
       </label>
 
-      <div class="alert info">Você ainda vai revisar tudo antes de confirmar. Não precisa criar conta.</div>
+      <div class="form-reassurance" role="status">
+        <strong>Próximo passo: revisão</strong>
+        <span>Você poderá conferir todos os dados antes de confirmar o agendamento.</span>
+      </div>
       <button class="btn primary full" type="submit">Revisar agendamento</button>
     </form>
   </section>

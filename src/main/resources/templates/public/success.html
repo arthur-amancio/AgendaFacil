@@ -6,8 +6,8 @@
   <title>Agendamento enviado · AgendaFácil Pro</title>
   <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
-<body class="public">
-<main class="shell narrow">
+<body class="public public-booking">
+<main class="shell narrow public-booking-shell">
   <nav class="booking-stepper" aria-label="Etapas do agendamento">
     <div class="stepper-mobile-summary">
       <div>
@@ -23,27 +23,31 @@
     </ol>
   </nav>
 
-  <section class="card center">
-    <div class="done">✓</div>
-    <span class="eyebrow" th:text="${summary.status}">Pendente</span>
-    <h1 th:text="${summary.statusMessage}">Seu pedido foi recebido.</h1>
-    <p class="muted" th:text="${summary.nextStep}">O estabelecimento vai revisar seu pedido.</p>
+  <section class="card center booking-main-card success-card" aria-labelledby="success-title">
+    <div class="done" aria-hidden="true">✓</div>
+    <span class="status-label" th:text="${summary.status}">Pendente</span>
+    <h1 id="success-title" th:text="${summary.statusMessage}">Seu pedido foi recebido.</h1>
+    <p class="success-next-step" th:text="${summary.nextStep}">O estabelecimento vai revisar seu pedido.</p>
 
-    <div class="booking-summary inline left">
+    <div class="booking-summary inline left success-summary" aria-label="Resumo do agendamento">
+      <div class="summary-heading">
+        <span class="eyebrow">Resumo</span>
+        <strong>Dados do seu atendimento</strong>
+      </div>
       <dl>
-        <dt>Estabelecimento</dt><dd th:text="${summary.establishment}">Estabelecimento</dd>
-        <dt>Serviço</dt><dd th:text="${summary.service}">Serviço</dd>
-        <dt>Profissional</dt><dd th:text="${summary.professional}">Profissional</dd>
-        <dt>Data</dt><dd class="summary-important" th:text="${#temporals.format(summary.start,'dd/MM/yyyy')}">24/06/2026</dd>
-        <dt>Horário</dt><dd class="summary-important"><span th:text="${#temporals.format(summary.start,'HH:mm')}">09:00</span> até <span th:text="${#temporals.format(summary.end,'HH:mm')}">10:00</span></dd>
-        <dt>Cliente</dt><dd th:text="${summary.customer}">Cliente</dd>
+        <div class="summary-item summary-item-wide"><dt>Estabelecimento</dt><dd th:text="${summary.establishment}">Estabelecimento</dd></div>
+        <div class="summary-item summary-item-wide"><dt>Serviço</dt><dd th:text="${summary.service}">Serviço</dd></div>
+        <div class="summary-item summary-item-wide"><dt>Profissional</dt><dd th:text="${summary.professional}">Profissional</dd></div>
+        <div class="summary-item summary-item-priority"><dt>Data</dt><dd class="summary-important" th:text="${#temporals.format(summary.start,'dd/MM/yyyy')}">24/06/2026</dd></div>
+        <div class="summary-item summary-item-priority"><dt>Horário</dt><dd class="summary-important"><span th:text="${#temporals.format(summary.start,'HH:mm')}">09:00</span>–<span th:text="${#temporals.format(summary.end,'HH:mm')}">10:00</span></dd></div>
+        <div class="summary-item summary-item-wide"><dt>Cliente</dt><dd th:text="${summary.customer}">Cliente</dd></div>
       </dl>
     </div>
 
-    <p class="success-actions">
-      <a class="btn primary" th:if="${summary.whatsappUrl != null}" th:href="${summary.whatsappUrl}" target="_blank" rel="noopener">Chamar no WhatsApp</a>
-      <a class="btn light" th:href="@{/agenda/{slug}(slug=${summary.establishmentSlug})}">Voltar para a página</a>
-    </p>
+    <div class="success-actions">
+      <a class="btn primary" th:if="${summary.whatsappUrl != null}" th:href="${summary.whatsappUrl}" target="_blank" rel="noopener noreferrer">Chamar no WhatsApp</a>
+      <a class="btn secondary" th:href="@{/agenda/{slug}(slug=${summary.establishmentSlug})}">Voltar para o estabelecimento</a>
+    </div>
   </section>
 </main>
 </body>
