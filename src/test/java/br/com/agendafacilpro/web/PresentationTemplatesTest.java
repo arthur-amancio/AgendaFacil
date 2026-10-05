@@ -77,11 +77,14 @@ class PresentationTemplatesTest {
         var service = new ServiceItem();
         service.setId(2L);
         service.setName("Atendimento completo");
+        service.setDescription("Cuidado completo com atendimento personalizado.");
         service.setDurationMinutes(60);
+        service.setPrice(new java.math.BigDecimal("120.00"));
         service.setActive(true);
         var professional = new Professional();
         professional.setId(3L);
         professional.setName("Profissional de demonstração");
+        professional.setBio("Especialista em atendimento personalizado.");
         professional.setActive(true);
         professional.getServices().add(service);
         var settings = EstablishmentSettings.defaultsFor(establishment);
@@ -106,8 +109,11 @@ class PresentationTemplatesTest {
         model.addAttribute("next7Date", DATE.plusDays(6));
         model.addAttribute("customerName", "Cliente de demonstração");
         model.addAttribute("customerPhone", "11999999999");
-        model.addAttribute("slots", List.of(new AppointmentService.Slot(LocalTime.of(9, 0), LocalTime.of(10, 0),
-                true, AppointmentService.SlotReason.AVAILABLE, "Disponível", null)));
+        model.addAttribute("slots", List.of(
+                new AppointmentService.Slot(LocalTime.of(9, 0), LocalTime.of(10, 0),
+                        true, AppointmentService.SlotReason.AVAILABLE, "Disponível", null),
+                new AppointmentService.Slot(LocalTime.of(10, 0), LocalTime.of(11, 0),
+                        false, AppointmentService.SlotReason.CONFLICT, "Indisponível no momento", null)));
         model.addAttribute("closedDay", false);
         model.addAttribute("slotSuggestions", List.of());
         model.addAttribute("summary", new AppointmentService.Summary("Cliente", establishment.getName(),
@@ -158,7 +164,11 @@ class PresentationTemplatesTest {
             String stepper = html.substring(html.indexOf("<ol>"), html.indexOf("</ol>"));
             assertThat(Pattern.compile("<li\\b").matcher(stepper).results().count()).isEqualTo(6);
             assertThat(stepper).contains("aria-current=\"step\"");
-            assertThat(html).contains("Etapa " + step + " de 6");
+            if (template.equals("public/slots")) {
+                assertThat(html).contains("Etapas 3 e 4 de 6", "Data e horário");
+            } else {
+                assertThat(html).contains("Etapa " + step + " de 6");
+            }
             assertThat(Pattern.compile("class=\"\\s*done\\s*\"").matcher(stepper).results().count()).isEqualTo(step - 1);
         }
         if (template.startsWith("panel/")) {
@@ -185,6 +195,57 @@ class PresentationTemplatesTest {
                 assertThat(Files.readString(file)).as(file.toString()).doesNotContain("th:utext");
             }
         }
+    }
+
+    @Test
+    void publicFlowKeepsRoutesPayloadCsrfAndHoneypotContracts() throws Exception {
+        assertThat(render("public/establishment"))
+                .contains("/agenda/agenda-demo/servicos/2/profissionais");
+        assertThat(render("public/professionals"))
+                .contains("/agenda/agenda-demo/servicos/2/profissionais/3/horarios");
+        assertThat(render("public/slots"))
+                .contains("/agenda/agenda-demo/servicos/2/profissionais/3/dados")
+                .contains("name=\"date\"");
+
+        String data = render("public/data");
+        assertThat(data)
+                .contains("action=\"/agenda/agenda-demo/revisar\"", "method=\"post\"",
+                        "name=\"serviceId\"", "name=\"professionalId\"", "name=\"date\"",
+                        "name=\"time\"", "name=\"customerName\"", "name=\"customerPhone\"",
+                        "name=\"website\"", "class=\"hp\"", "name=\"_csrf\"");
+
+        String confirm = render("public/confirm");
+        assertThat(confirm)
+                .contains("action=\"/agenda/agenda-demo/confirmar\"", "method=\"post\"",
+                        "name=\"customerName\"", "name=\"customerPhone\"", "name=\"website\"",
+                        "name=\"_csrf\"", "Voltar e corrigir")
+                .doesNotContain("onclick=\"history.back()\"", "customerName=", "customerPhone=");
+    }
+
+    @Test
+    void slotsKeepCombinedStepsAndExplainUnavailableTimes() throws Exception {
+        String html = render("public/slots");
+
+        assertThat(html)
+                .contains("Etapas 3 e 4 de 6", "role=\"list\"", "aria-disabled=\"true\"",
+                        "Indisponível no momento", "Não disponível", "Escolher horário")
+                .contains("aria-current=\"step\"");
+    }
+
+    @Test
+    void publicEmptyAndSuccessStatesStayHumanAndDoNotExposeInternalIdentifiers() throws Exception {
+        model.addAttribute("services", List.of());
+        assertThat(render("public/establishment"))
+                .contains("role=\"status\"", "Nenhum serviço disponível agora");
+
+        model.addAttribute("professionals", List.of());
+        assertThat(render("public/professionals"))
+                .contains("role=\"status\"", "Nenhum profissional disponível");
+
+        String success = render("public/success");
+        assertThat(success)
+                .contains("Seu agendamento está confirmado", "Dados do seu atendimento")
+                .doesNotContain("public-token", "publicToken", "appointmentId", "Agendamento #");
     }
 
     private String render(String template) throws Exception {
