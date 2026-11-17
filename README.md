@@ -9,6 +9,17 @@ Sistema web de agendamento para pequenos estabelecimentos e profissionais de ser
 
 > **Status:** projeto de portfólio em desenvolvimento.
 
+## Visão do produto
+
+| Quem utiliza | Objetivo |
+|---|---|
+| Cliente | Escolher um horário na página pública, sem criar uma conta. |
+| Estabelecimento | Administrar a agenda em um painel autenticado. |
+
+A aplicação combina páginas renderizadas no servidor, regras de agendamento, autenticação e persistência relacional. O repositório também documenta a configuração de produção, o proxy reverso e os endpoints internos de saúde.
+
+[Funcionalidades](#funcionalidades) · [Execução local](#como-executar) · [Configuração](#variáveis-de-ambiente) · [Deploy](docs/DEPLOYMENT.md)
+
 ## Funcionalidades
 
 - página pública de agendamento;
